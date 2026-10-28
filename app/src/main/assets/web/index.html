@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>KidsTube</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<!-- Home -->
+<section id="home" class="layer">
+  <header class="topbar">
+    <div class="logo"><span class="logo-mark"></span>KidsTube</div>
+    <div class="search f" data-action="search-input">
+      <span class="search-ic">🔍</span>
+      <input id="homeSearch" type="text" placeholder="Что посмотрим?" autocomplete="off" enterkeyhint="search">
+    </div>
+    <button class="round f mic" data-action="voice" aria-label="Голосовой поиск">🎤</button>
+    <button class="round f gear" data-action="settings" aria-label="Настройки">⚙</button>
+  </header>
+  <main class="scroller" id="homeRows"></main>
+</section>
+
+<!-- Search results -->
+<section id="results" class="layer">
+  <header class="topbar">
+    <button class="round f" data-action="back" aria-label="Назад">←</button>
+    <div class="search f" data-action="search-input">
+      <span class="search-ic">🔍</span>
+      <input id="resultsSearch" type="text" placeholder="Что посмотрим?" autocomplete="off" enterkeyhint="search">
+    </div>
+    <button class="round f mic" data-action="voice" aria-label="Голосовой поиск">🎤</button>
+  </header>
+  <main class="scroller"><div class="grid" id="resultsGrid"></div><div class="status" id="resultsStatus"></div></main>
+</section>
+
+<!-- Player -->
+<section id="player" class="layer">
+  <div class="yt-wrap"><div id="yt"></div></div>
+  <div class="osd" id="osd">
+    <div class="osd-top"><div class="osd-title" id="osdTitle"></div><div class="osd-ch" id="osdChannel"></div></div>
+    <div class="osd-center" id="osdIcon"></div>
+    <div class="osd-bottom">
+      <div class="bar"><div class="bar-fill" id="osdBar"></div></div>
+      <div class="osd-times"><span id="osdTime">0:00</span><span class="osd-hint">OK — пауза · ◀ ▶ — перемотка · ▼ — похожие · Назад — выход</span><span id="osdDur">0:00</span></div>
+    </div>
+  </div>
+  <div class="player-msg" id="playerMsg"></div>
+  <div class="rel-panel scroller" id="relPanel">
+    <div class="rel-actions">
+      <button class="btn primary f" data-action="rel-close">▶ Смотреть дальше</button>
+      <button class="btn f chan-btn" data-action="rel-channel" id="relChannelBtn"></button>
+    </div>
+    <div id="relRows"></div>
+  </div>
+</section>
+
+<!-- Channel -->
+<section id="channel" class="layer">
+  <header class="topbar">
+    <button class="round f" data-action="back" aria-label="Назад">←</button>
+    <img class="chan-avatar" id="chanAvatar" alt="">
+    <div class="chan-title" id="chanTitle"></div>
+    <button class="btn f sub-btn" data-action="subscribe" id="chanSub">⭐ Подписаться</button>
+  </header>
+  <main class="scroller"><div class="grid" id="chanGrid"></div><div class="status" id="chanStatus"></div></main>
+</section>
+
+<!-- First run -->
+<section id="setup" class="layer">
+  <div class="setup-box">
+    <h1>Привет! Давайте настроим KidsTube</h1>
+    <p>Откройте на телефоне (в той же Wi‑Fi сети) этот адрес или отсканируйте код:</p>
+    <div class="qr-row">
+      <div class="qr" id="setupQr"></div>
+      <div>
+        <div class="url" id="setupUrl">…</div>
+        <p class="muted">Там нужно вставить ключ YouTube API, придумать PIN и указать слова, которые нужно блокировать.</p>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn f" data-action="settings-direct">Ввести на телевизоре</button>
+    </div>
+  </div>
+</section>
+
+<!-- Settings (TV) -->
+<section id="settings" class="layer">
+  <main class="scroller settings-scroller">
+    <h1>Настройки для родителей</h1>
+    <div class="remote-hint">
+      <div class="qr" id="settingsQr"></div>
+      <div><p>Удобнее настраивать с телефона:</p><div class="url" id="settingsUrl">…</div><p class="muted" id="quotaInfo"></p></div>
+    </div>
+    <div class="update-box">
+      <div><div class="section-title">Обновления</div><div class="muted" id="updInfo">Нажмите «Проверить», чтобы узнать о новой версии.</div></div>
+      <div class="btn-row upd-btns">
+        <button class="btn f" data-action="upd-check">Проверить</button>
+        <button class="btn primary f" id="updInstall" data-action="upd-install" style="display:none">Установить</button>
+      </div>
+    </div>
+    <div class="form" id="settingsForm"></div>
+    <div class="btn-row">
+      <button class="btn primary f" data-action="settings-save">Сохранить</button>
+      <button class="btn f" data-action="back">Отмена</button>
+      <button class="btn f" data-action="clear-cache">Очистить кэш</button>
+      <button class="btn f" data-action="clear-history">Очистить историю</button>
+    </div>
+  </main>
+</section>
+
+<!-- PIN dialog -->
+<section id="pin" class="layer dialog">
+  <div class="dialog-box">
+    <h2 id="pinTitle">Введите PIN родителя</h2>
+    <input id="pinInput" class="f pin-input" type="password" inputmode="numeric" maxlength="8" autocomplete="off" data-action="pin-input">
+    <div class="pin-err" id="pinErr"></div>
+    <div class="btn-row">
+      <button class="btn primary f" data-action="pin-ok">OK</button>
+      <button class="btn f" data-action="back">Отмена</button>
+    </div>
+  </div>
+</section>
+
+<!-- Parent menu for a video -->
+<section id="menu" class="layer dialog">
+  <div class="dialog-box">
+    <h2 id="menuTitle"></h2>
+    <div class="menu-list" id="menuList"></div>
+  </div>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script src="qrcode.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

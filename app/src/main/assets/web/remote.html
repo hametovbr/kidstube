@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KidsTube — настройки</title>
+<style>
+  :root { --bg: #f5f6fa; --card: #fff; --text: #1b2030; --muted: #6b7489; --accent: #ff6b57; --line: #e3e6ee; --ok: #2fbf7f; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #0f1420; --card: #1a2235; --text: #f1f3f8; --muted: #9aa6c2; --line: #2a3450; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 20px 16px 120px; }
+  h1 { font-size: 24px; margin: 8px 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 20px; }
+  .card { background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 14px; border: 1px solid var(--line); }
+  .card h2 { font-size: 17px; margin: 0 0 12px; }
+  label { display: block; font-weight: 600; margin: 12px 0 6px; }
+  label:first-of-type { margin-top: 0; }
+  .hint { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  input[type=text], input[type=password], textarea { width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--text); font: inherit; }
+  textarea { min-height: 96px; resize: vertical; }
+  .check { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); font-weight: 500; margin: 0; }
+  .check:first-of-type { border-top: 0; }
+  .check input { width: 22px; height: 22px; accent-color: var(--accent); flex: none; }
+  button { font: inherit; font-weight: 700; border: 0; border-radius: 12px; padding: 13px 18px; background: var(--accent); color: #fff; width: 100%; cursor: pointer; }
+  button:disabled { opacity: .6; }
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: var(--card); border-top: 1px solid var(--line); }
+  .bar .in { max-width: 640px; margin: 0 auto; }
+  .msg { padding: 10px 12px; border-radius: 10px; margin-bottom: 14px; display: none; }
+  .msg.err { display: block; background: #ffe3df; color: #9b2414; }
+  .msg.ok { display: block; background: #dff7ea; color: #13643f; }
+  .hidden { display: none; }
+  a { color: var(--accent); }
+  ol { padding-left: 20px; margin: 6px 0 0; }
+  .hist { display: flex; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); align-items: flex-start; }
+  .hist:first-child { border-top: 0; }
+  .hist img { width: 96px; height: 54px; object-fit: cover; border-radius: 8px; flex: none; background: var(--line); }
+  .hist .t { font-weight: 600; font-size: 14px; line-height: 1.3; }
+  .hist .m { color: var(--muted); font-size: 12px; margin: 2px 0 6px; }
+  .hist .acts { display: flex; gap: 6px; flex-wrap: wrap; }
+  .mini { width: auto; padding: 5px 10px; font-size: 12px; border-radius: 8px; background: var(--line); color: var(--text); font-weight: 600; }
+  .mini.done { background: var(--ok); color: #fff; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+  .tab { background: var(--card); color: var(--text); border: 1px solid var(--line); }
+  .tab.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>KidsTube</h1>
+  <p class="sub">Настройки родительского контроля на телевизоре</p>
+  <div id="msg" class="msg"></div>
+
+  <!-- Login -->
+  <div id="login" class="card">
+    <h2>Вход</h2>
+    <label for="loginPin">PIN родителя</label>
+    <input id="loginPin" type="password" inputmode="numeric" autocomplete="off" placeholder="Если PIN ещё не задан — оставьте пустым">
+    <div style="height:14px"></div>
+    <button id="loginBtn">Войти</button>
+  </div>
+
+  <div class="tabs hidden" id="tabs">
+    <button class="tab on" data-tab="form">Настройки</button>
+    <button class="tab" data-tab="history">История просмотров</button>
+  </div>
+
+  <!-- History -->
+  <div id="history" class="hidden">
+    <div class="card">
+      <h2>Что смотрел ребёнок</h2>
+      <div class="hint" style="margin:-6px 0 8px">Можно сразу заблокировать видео или канал — затем нажмите «Сохранить».</div>
+      <div id="histList"><div class="hint">Загрузка…</div></div>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <div id="form" class="hidden">
+    <div class="card">
+      <h2>Доступ</h2>
+      <label for="apiKey">Ключ YouTube Data API</label>
+      <input id="apiKey" type="text" autocomplete="off" spellcheck="false" placeholder="AIzaSy…">
+      <div class="hint">Как получить: <ol>
+        <li>console.cloud.google.com → новый проект</li>
+        <li>«API и сервисы» → «Библиотека» → YouTube Data API v3 → «Включить»</li>
+        <li>«Учётные данные» → «Создать» → «Ключ API»</li></ol></div>
+      <label for="pin">PIN родителя (4–8 цифр)</label>
+      <input id="pin" type="text" inputmode="numeric" autocomplete="off" maxlength="8">
+      <div class="hint">Нужен для настроек и родительского меню на ТВ (долгое нажатие OK на видео).</div>
+    </div>
+
+    <div class="card">
+      <h2>Что блокировать</h2>
+      <label for="blockedWords">Запрещённые слова и фразы — по одному в строке</label>
+      <textarea id="blockedWords" placeholder="страшилки&#10;хаги ваги&#10;#prank"></textarea>
+      <div class="hint">Регистр не важен, «ё» = «е». Срабатывает и часть слова: «страш» скроет «страшный» и «страшилки».</div>
+
+      <label for="blockedChannels">Заблокированные каналы — по одному в строке</label>
+      <textarea id="blockedChannels" placeholder="@channelname&#10;https://www.youtube.com/@channel&#10;Точное название канала"></textarea>
+
+      <label for="blockedVideos">Заблокированные видео — ссылки или ID</label>
+      <textarea id="blockedVideos" placeholder="https://youtu.be/xxxxxxxxxxx"></textarea>
+    </div>
+
+    <div class="card">
+      <h2>Где искать слова</h2>
+      <label class="check"><input type="checkbox" id="checkTitle"> В названии видео</label>
+      <label class="check"><input type="checkbox" id="checkTags"> В тегах</label>
+      <label class="check"><input type="checkbox" id="checkDescription"> В описании</label>
+      <label class="check"><input type="checkbox" id="checkChannel"> В названии канала</label>
+    </div>
+
+    <div class="card">
+      <h2>Дополнительно</h2>
+      <label class="check"><input type="checkbox" id="onlyKids"> Только видео с пометкой YouTube «для детей»</label>
+      <label class="check"><input type="checkbox" id="hideShort"> Скрывать очень короткие видео (до 1 минуты)</label>
+      <label class="check"><input type="checkbox" id="autoplayNext"> Автоматически включать следующее видео</label>
+    </div>
+
+    <div class="card">
+      <h2>Главный экран</h2>
+      <label for="homeChannels">Подписки — каналы, новые видео которых показываются на главной (по одному в строке)</label>
+      <textarea id="homeChannels" placeholder="@mashaimedved&#10;https://www.youtube.com/@fixiki"></textarea>
+      <div class="hint">Указывайте @имя канала или ссылку на него. Видео каналов тоже проходят фильтр.</div>
+      <label for="homeQueries">Подборки по запросам — по одному в строке</label>
+      <textarea id="homeQueries" placeholder="песенки для детей&#10;развивающие мультики"></textarea>
+      <div class="hint">Каждая подборка — один поиск (≈1% дневной квоты), результат хранится 6 часов.</div>
+    </div>
+  </div>
+</div>
+
+<div class="bar hidden" id="bar"><div class="in"><button id="saveBtn">Сохранить на телевизор</button></div></div>
+
+<script>
+(function () {
+  var LISTS = ['blockedWords', 'blockedChannels', 'blockedVideos', 'homeChannels', 'homeQueries'];
+  var BOOLS = { checkTitle: true, checkTags: true, checkDescription: false, checkChannel: true, onlyKids: true, hideShort: false, autoplayNext: true };
+  var pin = '';
+  var current = {};
+
+  function $(id) { return document.getElementById(id); }
+  function msg(text, ok) {
+    var m = $('msg');
+    m.textContent = text || '';
+    m.className = 'msg' + (text ? (ok ? ' ok' : ' err') : '');
+    if (text) window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  function post(path, body) {
+    return fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json(); });
+  }
+  function lines(v) { return v.split(/[\n,;]+/).map(function (x) { return x.trim(); }).filter(Boolean); }
+
+  function fill(s) {
+    current = s || {};
+    $('apiKey').value = s.apiKey || '';
+    $('pin').value = s.pin || '';
+    LISTS.forEach(function (k) { $(k).value = (s[k] || []).join('\n'); });
+    Object.keys(BOOLS).forEach(function (k) { $(k).checked = s.hasOwnProperty(k) ? !!s[k] : BOOLS[k]; });
+  }
+
+  $('loginBtn').onclick = function () {
+    var p = $('loginPin').value.trim();
+    $('loginBtn').disabled = true;
+    post('/api/login', { pin: p }).then(function (r) {
+      if (!r.ok) { msg(r.error || 'Ошибка'); return; }
+      pin = p;
+      msg('');
+      fill(r.settings || {});
+      $('login').classList.add('hidden');
+      $('form').classList.remove('hidden');
+      $('tabs').classList.remove('hidden');
+      $('bar').classList.remove('hidden');
+    }).catch(function () { msg('Нет связи с телевизором. Приложение KidsTube должно быть открыто.'); })
+      .then(function () { $('loginBtn').disabled = false; });
+  };
+  $('loginPin').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('loginBtn').onclick(); });
+
+  // ---- Tabs & history ----
+  Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (t) {
+    t.onclick = function () {
+      Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (x) { x.classList.toggle('on', x === t); });
+      var tab = t.getAttribute('data-tab');
+      $('form').classList.toggle('hidden', tab !== 'form');
+      $('history').classList.toggle('hidden', tab !== 'history');
+      if (tab === 'history') loadHistory();
+    };
+  });
+
+  function fmtDate(ms) {
+    var d = new Date(ms);
+    var p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return p(d.getDate()) + '.' + p(d.getMonth() + 1) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+
+  function appendLine(id, line) {
+    var cur = lines($(id).value);
+    if (cur.indexOf(line) < 0) cur.push(line);
+    $(id).value = cur.join('\n');
+  }
+
+  function loadHistory() {
+    post('/api/history', { pin: pin }).then(function (r) {
+      var box = $('histList');
+      box.innerHTML = '';
+      var list = (r && r.history) || [];
+      if (!list.length) { box.innerHTML = '<div class="hint">Пока ничего не смотрели.</div>'; return; }
+      list.slice(0, 150).forEach(function (v) {
+        var row = document.createElement('div'); row.className = 'hist';
+        var img = document.createElement('img'); img.src = v.thumb || ''; img.loading = 'lazy'; row.appendChild(img);
+        var info = document.createElement('div');
+        var t = document.createElement('div'); t.className = 't'; t.textContent = v.title; info.appendChild(t);
+        var m = document.createElement('div'); m.className = 'm';
+        m.textContent = v.channelTitle + ' · ' + fmtDate(v.watchedAt) + (v.count > 1 ? ' · смотрел ' + v.count + ' раз' : '');
+        info.appendChild(m);
+        var acts = document.createElement('div'); acts.className = 'acts';
+        var b1 = document.createElement('button'); b1.className = 'mini'; b1.textContent = '🚫 Видео';
+        b1.onclick = function () { appendLine('blockedVideos', 'https://youtu.be/' + v.id); b1.classList.add('done'); b1.textContent = '✓ Видео в списке'; };
+        var b2 = document.createElement('button'); b2.className = 'mini'; b2.textContent = '🚫 Канал';
+        b2.onclick = function () { appendLine('blockedChannels', 'https://www.youtube.com/channel/' + v.channelId); b2.classList.add('done'); b2.textContent = '✓ Канал в списке'; };
+        var a = document.createElement('a'); a.href = 'https://youtu.be/' + v.id; a.target = '_blank'; a.className = 'mini'; a.textContent = 'Открыть'; a.style.textDecoration = 'none';
+        acts.appendChild(b1); if (v.channelId) acts.appendChild(b2); acts.appendChild(a);
+        info.appendChild(acts);
+        row.appendChild(info);
+        box.appendChild(row);
+      });
+    }).catch(function () { $('histList').innerHTML = '<div class="hint">Не удалось загрузить историю.</div>'; });
+  }
+
+  $('saveBtn').onclick = function () {
+    var s = {};
+    for (var k in current) s[k] = current[k];
+    s.apiKey = $('apiKey').value.trim();
+    s.pin = $('pin').value.trim();
+    LISTS.forEach(function (k) { s[k] = lines($(k).value); });
+    Object.keys(BOOLS).forEach(function (k) { s[k] = $(k).checked; });
+    if (!/^\d{4,8}$/.test(s.pin)) { msg('PIN должен состоять из 4–8 цифр'); return; }
+    if (!s.apiKey) { msg('Укажите ключ YouTube API'); return; }
+    $('saveBtn').disabled = true;
+    post('/api/save', { pin: pin, settings: s }).then(function (r) {
+      if (!r.ok) { msg(r.error || 'Ошибка'); return; }
+      pin = s.pin;
+      current = s;
+      msg('Сохранено — телевизор уже применил настройки ✓', true);
+    }).catch(function () { msg('Нет связи с телевизором. Приложение KidsTube должно быть открыто.'); })
+      .then(function () { $('saveBtn').disabled = false; });
+  };
+})();
+</script>
+</body>
+</html>
