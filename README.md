@@ -9,7 +9,7 @@ An app for Android TV boxes. Your child searches for videos on their own (by voi
 - optionally, only videos YouTube marks as "made for kids", and no very short clips;
 - YouTube search always runs in Restricted Mode.
 
-The interface is available in **English** (default) and **Russian** — switch it in the parent settings.
+The interface is available in **English** (default) and **Russian**, and in two styles — **Kids** (bright and big) and **6+** (calm and compact). Both are switched in the parent settings.
 
 ## Screenshots
 
@@ -44,6 +44,23 @@ The interface is available in **English** (default) and **Russian** — switch i
 <p><img src="docs/screenshots/phone-settings.png" width="260" alt="Phone: settings"> <img src="docs/screenshots/phone-history.png" width="260" alt="Phone: watch history with one-tap blocking"> <img src="docs/screenshots/phone-app.png" width="260" alt="Phone: version, updates and maintenance"></p>
 
 <sub>Phone: settings · Phone: watch history with one-tap blocking · Phone: version, updates and maintenance</sub>
+
+### Interface styles
+
+**Kids** (default) is made for young children: big cards (3½ per row), bright accents, a glowing focus, emoji on idea chips, a pulsing microphone.
+
+**6+** is for older children who find that too babyish. It looks closer to a regular streaming app: neutral greys instead of colour, smaller and denser cards (4½ per row, 5 per row in grids), a thin white focus outline without glow, no emoji decorations or animations, smaller type and buttons, no on-screen remote hints in the player. Switch it in the parent settings on the TV or the phone ("Interface style").
+
+<table>
+<tr>
+<td width="50%"><img src="docs/screenshots/home-6plus.png" alt="6+ — Home"><br><sub>6+ — Home</sub></td>
+<td width="50%"><img src="docs/screenshots/results-6plus.png" alt="6+ — Search results (5 per row)"><br><sub>6+ — Search results (5 per row)</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/screenshots/up-next-6plus.png" alt="6+ — Up next while watching"><br><sub>6+ — Up next while watching</sub></td>
+<td width="50%"><img src="docs/screenshots/channel-6plus.png" alt="6+ — Channel page"><br><sub>6+ — Channel page</sub></td>
+</tr>
+</table>
 
 ## What the child sees
 

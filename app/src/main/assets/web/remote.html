@@ -119,6 +119,11 @@
         <label class="check" style="border:0;padding:4px 0"><input type="radio" name="tvlang" value="en"> English</label>
         <label class="check" style="border:0;padding:4px 0"><input type="radio" name="tvlang" value="ru"> Русский</label>
       </div>
+      <label data-i="theme"></label>
+      <div style="display:flex;flex-direction:column">
+        <label class="check" style="border:0;padding:4px 0"><input type="radio" name="tvtheme" value="kids"> <span data-i="themeKids"></span></label>
+        <label class="check" style="border:0;padding:4px 0"><input type="radio" name="tvtheme" value="teen"> <span data-i="themeTeen"></span></label>
+      </div>
       <label for="apiKey" data-i="apiKey"></label>
       <input id="apiKey" type="text" autocomplete="off" spellcheck="false" placeholder="AIzaSy…">
       <div class="hint"><span data-i="howTo"></span><ol>
@@ -184,7 +189,7 @@
       histTitle: 'What your child watched', histHint: 'You can block a video or channel right here — then press “Save”.',
       loading: 'Loading…', histEmpty: 'Nothing watched yet.', histFail: 'Could not load the history.',
       watchedTimes: 'watched {0} times', blockVideo: '🚫 Video', blockChannel: '🚫 Channel', videoListed: '✓ Video listed', channelListed: '✓ Channel listed', open: 'Open',
-      access: 'Access', language: 'TV language', apiKey: 'YouTube Data API key', howTo: 'How to get one:',
+      access: 'Access', language: 'TV language', theme: 'Interface style', themeKids: 'Kids — bright and big', themeTeen: '6+ — calm and compact', apiKey: 'YouTube Data API key', howTo: 'How to get one:',
       how1: 'console.cloud.google.com → new project', how2: '“APIs & Services” → “Library” → YouTube Data API v3 → “Enable”', how3: '“Credentials” → “Create credentials” → “API key”',
       pinLabel: 'Parent PIN (4–8 digits)', pinHint: 'Needed for the settings and the parent menu on the TV (long-press OK on a video).',
       whatBlock: 'What to block', words: 'Blocked words and phrases — one per line', wordsPh: 'scary\nhuggy wuggy\n#prank',
@@ -212,7 +217,7 @@
       histTitle: 'Что смотрел ребёнок', histHint: 'Можно сразу заблокировать видео или канал — затем нажмите «Сохранить».',
       loading: 'Загрузка…', histEmpty: 'Пока ничего не смотрели.', histFail: 'Не удалось загрузить историю.',
       watchedTimes: 'смотрел {0} раз', blockVideo: '🚫 Видео', blockChannel: '🚫 Канал', videoListed: '✓ Видео в списке', channelListed: '✓ Канал в списке', open: 'Открыть',
-      access: 'Доступ', language: 'Язык на телевизоре', apiKey: 'Ключ YouTube Data API', howTo: 'Как получить:',
+      access: 'Доступ', language: 'Язык на телевизоре', theme: 'Стиль интерфейса', themeKids: 'Детский — яркий и крупный', themeTeen: '6+ — спокойный и компактный', apiKey: 'Ключ YouTube Data API', howTo: 'Как получить:',
       how1: 'console.cloud.google.com → новый проект', how2: '«API и сервисы» → «Библиотека» → YouTube Data API v3 → «Включить»', how3: '«Учётные данные» → «Создать» → «Ключ API»',
       pinLabel: 'PIN родителя (4–8 цифр)', pinHint: 'Нужен для настроек и родительского меню на ТВ (долгое нажатие OK на видео).',
       whatBlock: 'Что блокировать', words: 'Запрещённые слова и фразы — по одному в строке', wordsPh: 'страшилки\nхаги ваги\n#prank',
@@ -265,6 +270,8 @@
     $('pin').value = s.pin || '';
     var tvLang = s.lang === 'ru' ? 'ru' : 'en';
     Array.prototype.forEach.call(document.querySelectorAll('input[name=tvlang]'), function (r) { r.checked = r.value === tvLang; });
+    var tvTheme = s.theme === 'teen' ? 'teen' : 'kids';
+    Array.prototype.forEach.call(document.querySelectorAll('input[name=tvtheme]'), function (r) { r.checked = r.value === tvTheme; });
     LISTS.forEach(function (k) { $(k).value = (s[k] || []).join('\n'); });
     Object.keys(BOOLS).forEach(function (k) { $(k).checked = s.hasOwnProperty(k) ? !!s[k] : BOOLS[k]; });
   }
@@ -392,6 +399,8 @@
     s.pin = $('pin').value.trim();
     var picked = document.querySelector('input[name=tvlang]:checked');
     s.lang = picked ? picked.value : (current.lang || 'en');
+    var pickedTheme = document.querySelector('input[name=tvtheme]:checked');
+    s.theme = pickedTheme ? pickedTheme.value : (current.theme || 'kids');
     LISTS.forEach(function (k) { s[k] = lines($(k).value); });
     Object.keys(BOOLS).forEach(function (k) { s[k] = $(k).checked; });
     if (!/^\d{4,8}$/.test(s.pin)) { msg(t('pinFormat')); return; }

@@ -19,6 +19,12 @@
   --safe-x: 3rem;        /* 48dp */
   --safe-y: 1.7rem;      /* 27dp */
   --content-x: 8rem;     /* left edge of content next to the rail */
+  --card-w: 13.75rem;    /* 220dp: 3½ cards per row, the last one peeks */
+  --radius: .9rem;
+  --focus-scale: 1.08;
+  --focus-ring: .19rem;
+  --primary-bg: var(--brand);
+  --primary-fg: #fff;
 }
 
 html { font-size: calc(100vw / 60); }
@@ -44,7 +50,7 @@ svg { width: 1.5rem; height: 1.5rem; fill: currentColor; flex: none; }
 
 /* ---------- Focus ---------- */
 .f { transition: transform .16s ease-out, box-shadow .16s ease-out, background-color .16s, opacity .16s; outline: none; }
-.f.focused { box-shadow: 0 0 0 .19rem var(--focus), 0 .5rem 2rem var(--glow); }
+.f.focused { box-shadow: 0 0 0 var(--focus-ring) var(--focus), 0 .5rem 2rem var(--glow); }
 .f.pressed { transform: scale(.96) !important; }
 
 /* ---------- Side rail ---------- */
@@ -82,12 +88,12 @@ body.rail-open .rail-item { width: 11.5rem; }
 .row-title svg { width: 1.4rem; height: 1.4rem; color: var(--yellow); }
 .row-title img { width: 1.9rem; height: 1.9rem; border-radius: 50%; }
 .row-cards { display: flex; gap: 1.25rem; overflow: hidden; padding: .9rem 1rem 1.1rem; margin: 0 -1rem; }
-.row-cards > .card { flex: none; width: 13.75rem; }            /* 220dp: 3½ cards visible, the last one peeks */
+.row-cards > .card { flex: none; width: var(--card-w); }
 .row-msg { color: var(--muted); padding: .4rem 0 1rem; font-size: 1.125rem; }
 
 /* ---------- Cards ---------- */
-.card { border-radius: .9rem; background: var(--surface); overflow: hidden; position: relative; }
-.card.focused { transform: scale(1.08); z-index: 2; background: var(--surface2); }
+.card { border-radius: var(--radius); background: var(--surface); overflow: hidden; position: relative; }
+.card.focused { transform: scale(var(--focus-scale)); z-index: 2; background: var(--surface2); }
 .thumb { position: relative; padding-top: 56.25%; background: #29344f; }
 .thumb img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 .dur { position: absolute; right: .45rem; bottom: .45rem; background: rgba(0,0,0,.8); padding: .1rem .45rem; border-radius: .4rem; font-size: .875rem; font-weight: 700; }
@@ -115,8 +121,8 @@ body.rail-open .rail-item { width: 11.5rem; }
 .empty .big { font-size: 3.5rem; line-height: 1; }
 
 /* Skeleton placeholders while loading */
-.skel { border-radius: .9rem; background: var(--surface); overflow: hidden; }
-.row-cards > .skel { flex: none; width: 13.75rem; }
+.skel { border-radius: var(--radius); background: var(--surface); overflow: hidden; }
+.row-cards > .skel { flex: none; width: var(--card-w); }
 .skel .thumb { background: linear-gradient(100deg, #1e2740 30%, #2a3555 50%, #1e2740 70%); background-size: 300% 100%; animation: shimmer 1.4s infinite linear; }
 .skel .line { height: .9rem; margin: .75rem .75rem .9rem; border-radius: .4rem; background: #232d47; width: 70%; }
 @keyframes shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
@@ -152,7 +158,7 @@ body.rail-open .rail-item { width: 11.5rem; }
 /* ---------- Buttons ---------- */
 .btn-row { display: flex; gap: 1rem; margin-top: 1.6rem; flex-wrap: wrap; }
 .btn { background: var(--surface2); padding: 0 1.6rem; height: 3.25rem; border-radius: 1.625rem; font-size: 1.125rem; font-weight: 700; display: inline-flex; align-items: center; gap: .6rem; }
-.btn.primary { background: var(--brand); color: #fff; }
+.btn.primary { background: var(--primary-bg); color: var(--primary-fg); }
 .btn.focused { transform: scale(1.06); }
 .btn.primary.focused { background: #ff8c6e; }
 
@@ -231,3 +237,74 @@ body.rail-open .rail-item { width: 11.5rem; }
 .toast.shown { opacity: 1; transform: translate(-50%, 0); }
 .spinner { width: 2.4rem; height: 2.4rem; border: .3rem solid rgba(255,255,255,.2); border-top-color: var(--brand); border-radius: 50%; animation: spin .8s linear infinite; margin: 1rem auto; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* =====================================================================================
+ * "6+" theme: calmer and more grown-up — neutral greys, smaller and denser cards,
+ * thin white focus outline without glow, no emoji decorations or pulsing animations.
+ * ===================================================================================== */
+body.theme-teen {
+  --bg: #111214;
+  --surface: #1c1d21;
+  --surface2: #2a2c31;
+  --text: #e8e9ec;
+  --muted: #9a9ca4;
+  --brand: #e5484d;
+  --focus: #ffffff;
+  --glow: transparent;
+  --yellow: #c9ccd3;
+  --card-w: 11.25rem;    /* 180dp: about 4½ cards per row */
+  --radius: .5rem;
+  --focus-scale: 1.05;
+  --focus-ring: .1875rem;
+  --primary-bg: #e8e9ec;
+  --primary-fg: #111214;
+}
+body.theme-teen .rail { background: linear-gradient(90deg, rgba(17,18,20,1) 70%, rgba(17,18,20,0)); }
+body.theme-teen.rail-open .rail { background: #17181b; }
+body.theme-teen .rail-item.focused { background: #e8e9ec; color: #111214; box-shadow: none; }
+body.theme-teen .rail-item.active { background: transparent; color: var(--text); }
+body.theme-teen .rail-item.active.focused { background: #e8e9ec; color: #111214; }
+body.theme-teen .row { margin-bottom: .75rem; }
+body.theme-teen .row-title { font-size: 1.125rem; font-weight: 600; height: 1.9rem; }
+body.theme-teen .row-title svg { display: none; }
+body.theme-teen .row-cards { gap: 1rem; padding: .6rem 1rem .8rem; }
+body.theme-teen .card { background: transparent; overflow: visible; }
+body.theme-teen .card .thumb { border-radius: var(--radius); overflow: hidden; }
+body.theme-teen .card.focused { background: transparent; box-shadow: none; }
+body.theme-teen .card.focused .thumb { box-shadow: 0 0 0 var(--focus-ring) var(--focus); }
+body.theme-teen .card .title { font-size: .9375rem; font-weight: 600; margin: .5rem .1rem .15rem; }
+body.theme-teen .card .ch { font-size: .8125rem; margin: 0 .1rem .4rem; }
+body.theme-teen .card.more { background: var(--surface); }
+body.theme-teen .card.more.focused { box-shadow: 0 0 0 var(--focus-ring) var(--focus); }
+body.theme-teen .card.chan-card.focused { background: transparent; }
+body.theme-teen .card.chan-card.focused img { box-shadow: 0 0 0 var(--focus-ring) var(--focus); }
+body.theme-teen .chan-card img { width: 5.5rem; height: 5.5rem; }
+body.theme-teen .row-cards > .card.chan-card { width: 8rem; }
+body.theme-teen .dur { font-size: .75rem; font-weight: 600; padding: .05rem .35rem; }
+body.theme-teen .grid { grid-template-columns: repeat(5, 1fr); gap: 1.25rem 1rem; }
+body.theme-teen .chan-grid { grid-template-columns: repeat(6, 1fr); }
+body.theme-teen .page-title { font-size: 1.625rem; font-weight: 700; }
+body.theme-teen .mic-big { width: 3.5rem; height: 3.5rem; background: var(--surface2); animation: none; }
+body.theme-teen .mic-big svg { width: 1.6rem; height: 1.6rem; }
+body.theme-teen .mic-big.focused { background: #e8e9ec; }
+body.theme-teen .mic-big.focused svg { color: #111214; }
+body.theme-teen .search-field { height: 3rem; border-radius: 1.5rem; }
+body.theme-teen .search-field input { font-size: 1.0625rem; }
+body.theme-teen .chips-title { font-size: 1rem; font-weight: 600; }
+body.theme-teen .chip { height: 2.5rem; padding: 0 1.1rem; font-size: 1rem; font-weight: 500; border-radius: 1.25rem; }
+body.theme-teen .chip .ico { display: none; }
+body.theme-teen .chip.focused { background: #e8e9ec; color: #111214; box-shadow: none; transform: none; }
+body.theme-teen .empty .big { display: none; }
+body.theme-teen .btn { height: 2.75rem; font-size: 1rem; font-weight: 600; border-radius: 1.375rem; }
+body.theme-teen .btn.focused { transform: none; background: #e8e9ec; color: #111214; box-shadow: none; }
+body.theme-teen .tip { font-size: 1rem; }
+body.theme-teen .osd-center { width: 5rem; height: 5rem; }
+body.theme-teen .osd-center svg { width: 2.4rem; height: 2.4rem; }
+body.theme-teen .osd-title { font-size: 1.5rem; font-weight: 700; }
+body.theme-teen .osd-hints { display: none; }
+body.theme-teen .skel { background: transparent; }
+body.theme-teen .skel .thumb { border-radius: var(--radius); background: linear-gradient(100deg, #1c1d21 30%, #25272b 50%, #1c1d21 70%); background-size: 300% 100%; }
+body.theme-teen .skel .line { background: #1f2024; margin: .5rem .1rem; }
+body.theme-teen .chan-avatar { width: 3.5rem; height: 3.5rem; }
+body.theme-teen .chan-title { font-size: 1.625rem; font-weight: 700; }
+body.theme-teen .sub-btn.on { background: var(--surface2); color: var(--text); }

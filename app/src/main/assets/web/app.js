@@ -41,6 +41,7 @@
   // ===================================================================================
   var DEFAULTS = {
     lang: 'en',
+    theme: 'kids',
     apiKey: '',
     pin: '',
     blockedWords: [],
@@ -73,6 +74,8 @@
   function applyLanguage() {
     I18N.set(S.lang);
     I18N.apply();
+    // Interface style: "kids" (bright, big) or "teen" (6+, calm and compact).
+    document.body.classList.toggle('theme-teen', S.theme === 'teen');
   }
 
   function saveSettings() {
@@ -1496,6 +1499,7 @@
   // ---------------- Settings (TV) ----------------
   var FIELDS = [
     { key: 'lang', label: 'f.lang', type: 'choice', options: I18N.languages },
+    { key: 'theme', label: 'f.theme', type: 'choice', options: [['kids', 'theme.kids'], ['teen', 'theme.teen']] },
     { key: 'apiKey', label: 'f.apiKey', type: 'text' },
     { key: 'pin', label: 'f.pin', type: 'pin' },
     { section: 'f.secBlock' },
@@ -1548,7 +1552,7 @@
         ch._show = function () {
           var self = this;
           var o = f.options.filter(function (x) { return x[0] === self._value; })[0] || f.options[0];
-          this._val.textContent = '◀ ' + o[1] + ' ▶';
+          this._val.textContent = '◀ ' + t(o[1]) + ' ▶';
         };
         ch._show();
         form.appendChild(ch);
