@@ -153,9 +153,9 @@ final class SettingsServer implements Runnable {
                 if (err != null) {
                     sendJson(out, 403, error(err));
                 } else if (settings == null) {
-                    sendJson(out, 400, error("Нет данных"));
+                    sendJson(out, 400, error(Store.tr(act, "No data", "Нет данных")));
                 } else if (!settings.optString("pin", "").matches("\\d{4,8}")) {
-                    sendJson(out, 400, error("PIN должен состоять из 4–8 цифр"));
+                    sendJson(out, 400, error(Store.tr(act, "The PIN must be 4–8 digits", "PIN должен состоять из 4–8 цифр")));
                 } else {
                     Store.save(act, settings.toString());
                     act.onSettingsChangedRemotely();
@@ -168,7 +168,7 @@ final class SettingsServer implements Runnable {
             }
         } catch (Exception e) {
             try {
-                sendJson(client.getOutputStream(), 500, error("Ошибка сервера"));
+                sendJson(client.getOutputStream(), 500, error(Store.tr(act, "Server error", "Ошибка сервера")));
             } catch (Exception ignored) {
             }
         } finally {
@@ -182,7 +182,7 @@ final class SettingsServer implements Runnable {
     /** Returns null when the PIN is accepted, otherwise a message for the parent. */
     private synchronized String checkPin(String pin) {
         long now = System.currentTimeMillis();
-        if (now < lockedUntil) return "Слишком много попыток. Подождите минуту.";
+        if (now < lockedUntil) return Store.tr(act, "Too many attempts. Wait a minute.", "Слишком много попыток. Подождите минуту.");
         String stored;
         try {
             stored = new JSONObject(Store.get(act)).optString("pin", "");
@@ -198,7 +198,7 @@ final class SettingsServer implements Runnable {
             failures = 0;
             lockedUntil = now + 60000;
         }
-        return "Неверный PIN";
+        return Store.tr(act, "Wrong PIN", "Неверный PIN");
     }
 
     private static JSONObject error(String msg) {

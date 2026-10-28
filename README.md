@@ -1,96 +1,126 @@
-# KidsTube — YouTube для детей с фильтром по словам (Android TV)
+# KidsTube — kids' YouTube with keyword filtering (Android TV)
 
-Приложение для приставки на Android TV. Ребёнок сам ищет видео (текстом или голосом с пульта), а KidsTube скрывает всё, что попадает под родительские правила:
+[Русская версия](README.ru.md)
 
-- **запрещённые слова** в названии, тегах, описании или названии канала (часть слова тоже срабатывает: `страш` скроет «страшилки»);
-- **заблокированные каналы и отдельные видео**;
-- по желанию — только видео с пометкой YouTube «для детей», без очень коротких роликов;
-- поиск YouTube всегда идёт в безопасном режиме.
+An app for Android TV boxes. Your child searches for videos on their own (by voice or with the remote), and KidsTube hides everything that matches the parent's rules:
 
-**Главный экран:**
-- **«Для тебя»** — рекомендации YouTube к последним просмотренным видео (уже просмотренное не повторяется);
-- **«Новое в подписках»** — свежие видео со всех каналов, на которые подписан ребёнок (кнопка «⭐ Подписаться» на странице канала);
-- **«Недавно смотрели»** и **«Мои каналы»**.
+- **blocked words** in the title, tags, description or channel name (parts of words work too: `scar` hides "scary");
+- **blocked channels and individual videos**;
+- optionally, only videos YouTube marks as "made for kids", and no very short clips;
+- YouTube search always runs in Restricted Mode.
 
-**История просмотров** хранится на приставке (последние 300 видео: когда и сколько раз смотрели). Родитель видит её на телефоне во вкладке «История просмотров» и может оттуда сразу заблокировать видео или канал.
+The interface is available in **English** (default) and **Russian** — switch it in the parent settings.
 
-Видео проигрываются официальным плеером YouTube, но без его интерфейса: нельзя уйти в комментарии или на сайт YouTube. Вместо рекомендаций YouTube — свои, **тоже прошедшие фильтр**:
+## What the child sees
 
-- **▼ во время просмотра** открывает панель «Похожие видео» и «Ещё с канала», а также кнопку перехода на канал;
-- после окончания видео панель открывается сама (или включается следующее видео — настраивается);
-- **страница канала** со всеми его видео (кнопка в плеере или карточка «Все видео →» на главной). Заблокированные каналы открыть нельзя.
+A side menu (press ◀ at the left edge of any screen) with four sections:
 
-## Установка на приставку
+- **Search** — a big microphone button plus one-press idea chips and recent searches, so no typing is needed;
+- **Home**:
+  - **For you** — YouTube's recommendations for recently watched videos (already watched ones are skipped);
+  - **New on your channels** — the latest videos from every channel the child subscribed to (the "⭐ Subscribe" button on a channel page);
+  - **Watch again** and **My channels**;
+- **My channels** — all subscriptions;
+- **Watched** — the viewing history.
 
-1. Скачайте `KidsTube.apk` (раздел **Releases → latest** этого репозитория или файл из чата).
-2. Перенесите на приставку любым способом:
-   - приложение **Send Files to TV** (есть в Google Play и на ТВ, и на телефоне);
-   - флешка + файловый менеджер на ТВ (например, X-plore);
-   - по сети через adb: `adb connect <IP-приставки>` → `adb install KidsTube.apk`.
-3. При первой установке разрешите установку из неизвестных источников для файлового менеджера (ТВ сам предложит).
+Videos play in the official YouTube player, but without its interface: there's no way into comments or the YouTube site. Instead of YouTube's suggestions the app shows its own, **filtered as well**:
 
-## Первая настройка
+- **▼ while watching** opens "Up next" and "More from this channel", plus a button to open the channel;
+- when a video ends, the panel opens by itself (or the next video starts — configurable);
+- **channel pages** list all of a channel's videos. Blocked channels can't be opened.
 
-При первом запуске на экране появится адрес вида `http://192.168.1.23:8765` и QR-код. Откройте его на телефоне в той же Wi-Fi сети и заполните:
+The **watch history** is stored on the box (last 300 videos: when and how many times). Parents see it on their phone in the "Watch history" tab and can block a video or channel right from there.
 
-- **ключ YouTube Data API** (как получить — ниже);
-- **PIN родителя** (4–8 цифр) — нужен, чтобы зайти в настройки и родительское меню на ТВ;
-- запрещённые слова, каналы, любимые каналы для главного экрана.
+## Installing on the TV box
 
-Настройки можно менять с телефона в любой момент, пока KidsTube открыт на ТВ — они применяются сразу.
+1. Download `KidsTube.apk` from **Releases → latest** in this repository.
+2. Copy it to the box in any way:
+   - the **Send Files to TV** app (on Google Play for both the TV and the phone);
+   - a USB stick and a file manager on the TV (for example, X-plore);
+   - over the network with adb: `adb connect <box-IP>` → `adb install KidsTube.apk`.
+3. On the first install, allow installs from unknown sources for the file manager (the TV will ask).
 
-### Ключ YouTube Data API
+Later versions install from inside the app (see [Updates](#updates)).
 
-1. [console.cloud.google.com](https://console.cloud.google.com) → создать проект.
-2. «API и сервисы» → «Библиотека» → **YouTube Data API v3** → «Включить».
-3. «Учётные данные» → «Создать учётные данные» → **Ключ API**.
-4. (Рекомендуется) в настройках ключа ограничьте его только YouTube Data API v3.
+## First setup
 
-### Откуда берутся видео и сколько это стоит
+On first launch the TV shows an address like `http://192.168.1.23:8765` and a QR code. Open it on a phone on the same Wi‑Fi network and fill in:
 
-- **Поиск и рекомендации** идут через внутренний API YouTube (тот же, что у сайта youtube.com, SmartTube и NewPipe) — без ключа и без квоты.
-- **Проверка каждого видео** (теги, пометка «для детей», длительность) — через официальный YouTube Data API по вашему ключу: 1 единица за 50 видео. Из 10 000 бесплатных единиц в сутки это тысячи поисков.
-- Внутренний API неофициальный и иногда меняется. Если он перестал отвечать, приложение само переключается на официальный поиск (100 единиц за поиск, ≈100 поисков в день), а «Похожие» подбирает по словам из названия. Ребёнок этого не заметит.
+- the **YouTube Data API key** (how to get one — below);
+- the **parent PIN** (4–8 digits) — it protects the settings and the parent menu on the TV;
+- blocked words and channels, subscriptions for the home screen, the TV language.
 
-## Пульт
+You can change the settings from the phone at any time while KidsTube is open on the TV; they apply immediately.
 
-| Где | Кнопка | Действие |
+### YouTube Data API key
+
+1. [console.cloud.google.com](https://console.cloud.google.com) → create a project.
+2. "APIs & Services" → "Library" → **YouTube Data API v3** → "Enable".
+3. "Credentials" → "Create credentials" → **API key**.
+4. (Recommended) restrict the key to YouTube Data API v3 in its settings.
+
+No credit card is needed.
+
+### Where videos come from and what it costs
+
+- **Search and recommendations** use YouTube's internal API (the same one youtube.com, SmartTube and NewPipe use) — no key, no quota.
+- **Every video is checked** (tags, "made for kids" flag, duration) through the official YouTube Data API with your key: 1 unit per 50 videos. Out of the 10,000 free daily units, that's thousands of searches.
+- The internal API is unofficial and changes from time to time. If it stops responding, the app switches to the official search on its own (100 units per search, about 100 searches a day), and "Up next" is built from the title's key words. The child won't notice.
+
+## Remote control
+
+| Where | Button | Action |
 |---|---|---|
-| Везде | стрелки / OK | навигация / выбор |
-| На видео | **долгое нажатие OK** (или Menu) | родительское меню (PIN): заблокировать видео или канал, добавить канал на главную |
-| Плеер | OK / Play | пауза |
-| Плеер | ◀ ▶ | перемотка на 10 секунд |
-| Плеер | ▼ | похожие видео, ещё с канала, переход на канал |
-| Плеер | Назад | выход из видео |
-| Поиск | 🎤 на экране | голосовой поиск |
+| Everywhere | arrows / OK | move / select |
+| Everywhere | ◀ at the left edge | open the side menu |
+| Everywhere | Back | previous screen; on Home — the side menu, then exit |
+| On a video | **long-press OK** (or Menu) | parent menu (PIN): block the video or channel, subscribe |
+| Player | OK / Play | pause |
+| Player | ◀ ▶ | seek 10 seconds |
+| Player | ▼ | up next, more from the channel, open the channel |
+| Player | Back | leave the video |
+| Search | 🎤 on screen (or the remote's search key) | voice search |
 
-## Чтобы ребёнок не обходил фильтр
+## Keeping the filter from being bypassed
 
-Отключите стандартные приложения YouTube на приставке (без root, через adb с компьютера или телефона):
+Disable the stock YouTube apps on the box (no root needed, via adb from a computer or phone):
 
 ```
-adb connect <IP-приставки>
+adb connect <box-IP>
 adb shell pm disable-user --user 0 com.google.android.youtube.tv
 adb shell pm disable-user --user 0 com.google.android.youtube.tvkids
 ```
 
-Вернуть: `adb shell pm enable com.google.android.youtube.tv`.
+To restore: `adb shell pm enable com.google.android.youtube.tv`.
 
-## Как устроено
+## Updates
 
-- `app/src/main/java/…/MainActivity.java` — WebView на весь экран, передача кнопок пульта в интерфейс, голосовой ввод.
-- `app/src/main/java/…/InnerTube.java` — поиск и рекомендации через внутренний API YouTube (только ID видео).
-- `app/src/main/java/…/Store.java` — настройки и история просмотров.
-- `app/src/main/java/…/SettingsServer.java` — маленький веб-сервер в локальной сети для настроек с телефона (всё под PIN, 5 неверных попыток — блокировка на минуту).
-- `app/src/main/assets/web/` — интерфейс для ТВ (`index.html`, `app.js`, `app.css`) и страница настроек для телефона (`remote.html`).
-- Фильтр: `blockReason()` в `app.js`. Для каждого найденного видео приложение дозапрашивает полные данные (теги, пометку «для детей», длительность) и только потом решает, показывать ли его.
+In the TV settings ("Parents" → "Updates") the app checks the latest GitHub release of `hametovbr/kidstube` (set in `Updater.java`) and installs the new version. It also checks by itself every 12 hours and shows a yellow dot on the "Parents" menu item. On the first update Android asks to allow KidsTube to install apps. Updates need the releases to be downloadable without signing in, so the repository must be public.
 
-## Обновления
+## How it works
 
-В настройках на ТВ (⚙ → «Обновления») приложение проверяет последний релиз на GitHub (`hametovbr/kidstube`, адрес задан в `Updater.java`) и ставит новую версию. Раз в 12 часов проверка идёт сама, а у шестерёнки появляется жёлтая точка. При первом обновлении Android попросит разрешить KidsTube устанавливать приложения. Для работы обновлений релизы репозитория должны быть доступны без входа (публичный репозиторий).
+- `app/src/main/java/…/MainActivity.java` — full-screen WebView, remote keys forwarded to the UI, voice input, update installation.
+- `app/src/main/java/…/InnerTube.java` — search and "up next" through YouTube's internal API (video IDs only).
+- `app/src/main/java/…/Store.java` — settings, language and watch history.
+- `app/src/main/java/…/SettingsServer.java` — a small web server on the local network for phone settings (everything behind the PIN; 5 wrong attempts lock it for a minute).
+- `app/src/main/java/…/Updater.java` — in-app updates from GitHub releases.
+- `app/src/main/assets/web/` — the TV interface (`index.html`, `app.js`, `app.css`, translations in `i18n.js`) and the phone settings page (`remote.html`).
+- The filter is `blockReason()` in `app.js`. For every video found, the app fetches its full details (tags, "made for kids", duration) before deciding whether to show it.
 
-## Сборка
+### Interface design
 
-GitHub Actions собирает APK при каждом пуше в `main` и публикует его в релиз `latest`. Локально: `gradle :app:assembleRelease` (нужны JDK 17 и Android SDK 34).
+The TV interface follows the Android TV and Fire TV design guidelines:
 
-Все сборки подписываются одним ключом `app/kidstube.keystore`, поэтому новая версия ставится поверх старой с сохранением настроек. Ключ лежит в репозитории намеренно — держите репозиторий приватным.
+- 960×540 dp canvas, 48 dp side / 27 dp top-bottom safe area;
+- a persistent side menu instead of a top bar that scrolls away; Back from content returns to the menu;
+- one axis per purpose: up/down moves between rows, left/right moves within a row; each row remembers its last focused item;
+- a clear focus state visible from across the room (scale, outline and glow) and short "pressed" feedback;
+- a dark, low-glare palette with bright colour reserved for focus;
+- icons and pictures alongside text, voice and one-press chips instead of typing — the main users can't read well yet;
+- skeleton placeholders while loading and friendly empty states.
+
+## Building
+
+GitHub Actions builds the APK on every push to `main` and publishes it as the `latest` release (the release notes contain `versionCode: N`, which the updater reads). Locally: `gradle :app:assembleRelease` (JDK 17 and Android SDK 34).
+
+All builds are signed with the same key, `app/kidstube.keystore`, so a new version installs over the old one and keeps the settings. The key is committed on purpose for simplicity; since the repository is public, anyone could sign an APK with it. For a stricter setup, move the keystore into a GitHub Actions secret.

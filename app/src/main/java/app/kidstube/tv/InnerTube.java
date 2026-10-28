@@ -30,9 +30,9 @@ final class InnerTube {
     private InnerTube() {}
 
     /** Search: returns {"ids":[...], "next": token|null}. */
-    static JSONObject search(String query, String continuation) throws Exception {
+    static JSONObject search(String query, String continuation, String lang) throws Exception {
         JSONObject body = new JSONObject();
-        body.put("context", context());
+        body.put("context", context(lang));
         if (continuation != null && !continuation.isEmpty()) {
             body.put("continuation", continuation);
         } else {
@@ -43,9 +43,9 @@ final class InnerTube {
     }
 
     /** "Up next" recommendations for a video: returns {"ids":[...], "next": null}. */
-    static JSONObject related(String videoId) throws Exception {
+    static JSONObject related(String videoId, String lang) throws Exception {
         JSONObject body = new JSONObject();
-        body.put("context", context());
+        body.put("context", context(lang));
         body.put("videoId", videoId);
         body.put("contentCheckOk", true);
         body.put("racyCheckOk", false);
@@ -59,15 +59,17 @@ final class InnerTube {
         return res;
     }
 
-    private static JSONObject context() throws Exception {
+    private static JSONObject context(String lang) throws Exception {
+        String country = java.util.Locale.getDefault().getCountry();
+        if (country == null || country.length() != 2) country = "ru".equals(lang) ? "RU" : "US";
         JSONObject client = new JSONObject();
         client.put("clientName", "WEB");
         client.put("clientVersion", CLIENT_VERSION);
-        client.put("hl", "ru");
-        client.put("gl", "RU");
+        client.put("hl", lang);
+        client.put("gl", country);
         client.put("platform", "DESKTOP");
         client.put("originalUrl", "https://www.youtube.com");
-        client.put("utcOffsetMinutes", 180);
+        client.put("utcOffsetMinutes", java.util.TimeZone.getDefault().getOffset(System.currentTimeMillis()) / 60000);
         JSONObject user = new JSONObject();
         // Restricted mode, same as the "safety mode" switch on youtube.com.
         user.put("enableSafetyMode", true);
@@ -87,7 +89,7 @@ final class InnerTube {
             c.setDoOutput(true);
             c.setRequestProperty("Content-Type", "application/json");
             c.setRequestProperty("User-Agent", UA);
-            c.setRequestProperty("Accept-Language", "ru-RU,ru;q=0.9");
+            c.setRequestProperty("Accept-Language", body.getJSONObject("context").getJSONObject("client").getString("hl"));
             c.setRequestProperty("Origin", "https://www.youtube.com");
             c.setRequestProperty("Referer", "https://www.youtube.com/");
             c.setRequestProperty("X-YouTube-Client-Name", "1");

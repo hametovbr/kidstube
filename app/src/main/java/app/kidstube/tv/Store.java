@@ -26,6 +26,21 @@ final class Store {
         prefs(c).edit().putString(KEY, json).commit();
     }
 
+    /** UI language chosen by the parent: "en" (default) or "ru". */
+    static String lang(Context c) {
+        try {
+            String l = new JSONObject(get(c)).optString("lang", "en");
+            return "ru".equals(l) ? "ru" : "en";
+        } catch (Exception e) {
+            return "en";
+        }
+    }
+
+    /** Picks the Russian or English text for the current language. */
+    static String tr(Context c, String en, String ru) {
+        return "ru".equals(lang(c)) ? ru : en;
+    }
+
     // ---- Watch history: newest first, kept in a file so parents can see it from the phone ----
 
     private static final int HISTORY_MAX = 300;

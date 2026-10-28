@@ -40,6 +40,7 @@
   // Settings
   // ===================================================================================
   var DEFAULTS = {
+    lang: 'en',
     apiKey: '',
     pin: '',
     blockedWords: [],
@@ -66,6 +67,12 @@
     LIST_KEYS.forEach(function (k) { S[k] = toList(S[k]); });
     S.blockedVideos = S.blockedVideos.map(videoIdFrom).filter(Boolean);
     rebuildFilter();
+    applyLanguage();
+  }
+
+  function applyLanguage() {
+    I18N.set(S.lang);
+    I18N.apply();
   }
 
   function saveSettings() {
@@ -201,7 +208,7 @@
   }
 
   function api(path, params, cost) {
-    if (!S.apiKey) return Promise.reject(new ApiError('noKey', 'Не указан ключ API'));
+    if (!S.apiKey) return Promise.reject(new ApiError('noKey'));
     params.key = S.apiKey;
     var qs = Object.keys(params).map(function (k) { return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); }).join('&');
     addQuota(cost);
@@ -214,17 +221,17 @@
         }
         return j;
       });
-    }, function () { throw new ApiError('network', 'Нет связи с YouTube'); });
+    }, function () { throw new ApiError('network'); });
   }
 
   function apiErrorText(e) {
     var r = e && e.reason;
-    if (r === 'quotaExceeded' || r === 'dailyLimitExceeded') return 'На сегодня лимит поисков закончился. Попробуйте завтра 🌙';
-    if (r === 'keyInvalid' || r === 'badRequest' && /key/i.test(e.message)) return 'Ключ API не подходит — проверьте настройки';
-    if (r === 'noKey') return 'Не указан ключ API — откройте настройки';
-    if (r === 'network') return 'Нет связи с интернетом';
-    if (r === 'channelNotFound') return 'Канал не найден';
-    return 'Ошибка YouTube: ' + ((e && e.message) || r || 'неизвестно');
+    if (r === 'quotaExceeded' || r === 'dailyLimitExceeded') return t('err.quota');
+    if (r === 'keyInvalid' || r === 'badRequest' && /key/i.test(e.message)) return t('err.key');
+    if (r === 'noKey') return t('err.noKey');
+    if (r === 'network') return t('err.network');
+    if (r === 'channelNotFound') return t('err.channel');
+    return t('err.youtube', (e && e.message) || r || t('err.unknown'));
   }
 
   function parseDuration(iso) {
@@ -264,7 +271,7 @@
     var chunks = [];
     for (var i = 0; i < ids.length; i += 50) chunks.push(ids.slice(i, i + 50));
     return Promise.all(chunks.map(function (c) {
-      return api('videos', { part: 'snippet,contentDetails,status', id: c.join(','), maxResults: 50, hl: 'ru' }, 1);
+      return api('videos', { part: 'snippet,contentDetails,status', id: c.join(','), maxResults: 50, hl: S.lang }, 1);
     })).then(function (pages) {
       var byId = {};
       pages.forEach(function (p) { (p.items || []).forEach(function (it) { byId[it.id] = normalizeVideo(it); }); });
@@ -298,7 +305,7 @@
   function nativeAsync(method) {
     var args = Array.prototype.slice.call(arguments, 1);
     return new Promise(function (resolve, reject) {
-      if (typeof Native[method] !== 'function') { reject(new Error('Недоступно в этой версии')); return; }
+      if (typeof Native[method] !== 'function') { reject(new Error(t('err.unsupported'))); return; }
       var id = 'n' + (++nativeSeq);
       nativeCalls[id] = function (ok, data) { if (ok) resolve(data); else reject(new Error(String(data))); };
       Native[method].apply(Native, [id].concat(args));
@@ -312,36 +319,36 @@
 
   function checkUpdates(silent) {
     if (Upd.busy) return;
-    if (!silent) updInfo('Проверяю…');
+    if (!silent) updInfo(t('upd.checking'));
     nativeAsync('checkUpdate').then(function (r) {
       Upd.info = r;
       try { localStorage.setItem('updChecked', String(Date.now())); } catch (e) {}
       renderUpdate();
-      if (silent && r.available) toast('Вышла новая версия KidsTube — установить можно в настройках ⚙');
-    }, function (e) { if (!silent) updInfo('Не удалось проверить: ' + e.message); });
+      if (silent && r.available) toast(t('upd.newToast'));
+    }, function (e) { if (!silent) updInfo(t('upd.checkFail', e.message)); });
   }
 
   function renderUpdate() {
     var r = Upd.info;
-    var gear = document.querySelector('#home .gear');
+    var gear = RAIL.querySelector('[data-action=settings]');
     if (gear) gear.classList.toggle('has-update', !!(r && r.available));
     if (!r || Upd.busy) return;
     $('updInstall').style.display = r.available ? '' : 'none';
-    if (r.available) updInfo('Доступна новая версия: ' + (r.latestName || ('сборка ' + r.latestCode)) + '. Сейчас установлена ' + r.currentName + '.');
-    else updInfo('Установлена последняя версия (' + r.currentName + ').');
+    if (r.available) updInfo(t('upd.available', r.latestName || t('upd.build', r.latestCode), r.currentName));
+    else updInfo(t('upd.latest', r.currentName));
   }
 
   function installUpdate() {
     if (!Upd.info || !Upd.info.available || Upd.busy) return;
     Upd.busy = true;
-    updInfo('Скачиваю обновление…');
+    updInfo(t('upd.downloading'));
     nativeAsync('installUpdate', Upd.info.url).then(function () {
       Upd.busy = false;
-      updInfo('Подтвердите установку на экране. После обновления приложение перезапустится.');
+      updInfo(t('upd.confirm'));
     }, function (e) {
       Upd.busy = false;
-      if (e.message === 'need-permission') updInfo('Разрешите KidsTube устанавливать приложения в открывшихся настройках, затем вернитесь и нажмите «Установить» ещё раз.');
-      else updInfo('Ошибка обновления: ' + e.message);
+      if (e.message === 'need-permission') updInfo(t('upd.permission'));
+      else updInfo(t('upd.error', e.message));
     });
   }
 
@@ -368,7 +375,7 @@
   }
 
   function apiSearch(q, pageToken) {
-    var params = { part: 'snippet', type: 'video', q: q, maxResults: 50, safeSearch: 'strict', videoEmbeddable: 'true', relevanceLanguage: 'ru' };
+    var params = { part: 'snippet', type: 'video', q: q, maxResults: 50, safeSearch: 'strict', videoEmbeddable: 'true', relevanceLanguage: S.lang };
     if (pageToken) params.pageToken = pageToken;
     return api('search', params, 100).then(function (j) {
       var ids = (j.items || []).map(function (it) { return it.id && it.id.videoId; });
@@ -416,7 +423,7 @@
     if (r.id) params.id = r.id; else params.forHandle = r.handle;
     return api('channels', params, 1).then(function (j) {
       var it = j.items && j.items[0];
-      if (!it) throw new ApiError('channelNotFound', 'Канал не найден');
+      if (!it) throw new ApiError('channelNotFound');
       var ch = {
         id: it.id,
         title: (it.snippet && it.snippet.title) || r.handle || it.id,
@@ -533,13 +540,30 @@
   // ===================================================================================
   // Focus navigation for the remote
   // ===================================================================================
+  var RAIL = $('rail');
+  var MEMORY_CONTAINERS = ['row-cards', 'rail-items', 'chips'];
+
+  function memoryContainer(el) {
+    var p = el && el.parentElement;
+    if (!p) return null;
+    for (var i = 0; i < MEMORY_CONTAINERS.length; i++) if (p.classList.contains(MEMORY_CONTAINERS[i])) return p;
+    return null;
+  }
+  function visible(el) { return !!el && document.body.contains(el) && (el.offsetParent !== null || el.getClientRects().length > 0); }
+
   var Nav = {
     current: null,
-    root: function () { return Screens.top() ? Screens.top().el : document.body; },
+    roots: function () {
+      var s = Screens.top();
+      if (!s) return [document.body];
+      return s.rail ? [s.el, RAIL] : [s.el];
+    },
     items: function () {
-      var all = this.root().querySelectorAll('.f');
       var out = [];
-      for (var i = 0; i < all.length; i++) if (all[i].offsetParent !== null || all[i].getClientRects().length) out.push(all[i]);
+      this.roots().forEach(function (root) {
+        var all = root.querySelectorAll('.f');
+        for (var i = 0; i < all.length; i++) if (visible(all[i])) out.push(all[i]);
+      });
       return out;
     },
     set: function (el) {
@@ -549,11 +573,21 @@
         if (inp && document.activeElement === inp) inp.blur();
       }
       this.current = el || null;
+      var inRail = !!el && RAIL.contains(el);
+      document.body.classList.toggle('rail-open', inRail);
       if (!el) return;
       el.classList.add('focused');
+      var mc = memoryContainer(el);
+      if (mc) mc._last = el;
       var s = Screens.top();
-      if (s) s.lastFocus = el;
+      if (s && !inRail) s.lastFocus = el;
       scrollToEl(el);
+    },
+    /** Moves focus into the side menu, onto the current section. */
+    toRail: function () {
+      var a = RAIL.querySelector('.rail-item.active') || RAIL.querySelector('.rail-item');
+      if (a && Screens.top() && Screens.top().rail) { this.set(a); return true; }
+      return false;
     },
     first: function () { var it = this.items(); this.set(it[0] || null); },
     restore: function () {
@@ -565,6 +599,9 @@
       var items = this.items();
       if (!items.length) return false;
       if (!this.current || items.indexOf(this.current) < 0) { this.set(items[0]); return true; }
+      // The side menu is its own column: up/down stay inside it, left/right cross over.
+      var inRailNow = RAIL.contains(this.current);
+      if (dir === 'up' || dir === 'down') items = items.filter(function (x) { return RAIL.contains(x) === inRailNow; });
       var a = this.current.getBoundingClientRect();
       var acx = a.left + a.width / 2, acy = a.top + a.height / 2;
       var best = null, bestScore = Infinity;
@@ -581,8 +618,17 @@
         var score = primary + cross;
         if (score < bestScore) { bestScore = score; best = el; }
       }
-      if (best) { this.set(best); return true; }
-      return false;
+      if (!best) return false;
+      var s = Screens.top();
+      if (s) s.userMoved = true;
+      var fromRail = RAIL.contains(this.current), toRail = RAIL.contains(best);
+      if (!fromRail && toRail) return this.toRail();
+      if (fromRail && !toRail && s && visible(s.lastFocus)) { this.set(s.lastFocus); return true; }
+      // Entering another row: go back to the card that was focused there last time.
+      var mc = memoryContainer(best);
+      if (mc && mc !== memoryContainer(this.current) && (dir === 'up' || dir === 'down') && visible(mc._last)) best = mc._last;
+      this.set(best);
+      return true;
     }
   };
   function gap(a1, a2, b1, b2) { return Math.max(0, Math.max(a1, b1) - Math.min(a2, b2)); }
@@ -628,6 +674,8 @@
       this.stack.push(s);
       s.el.classList.add('shown');
       s.lastFocus = null;
+      s.userMoved = false;
+      updateChrome();
       if (s.onShow) s.onShow(data);
       if (!Nav.current || !s.el.contains(Nav.current)) Nav.restore();
     },
@@ -638,6 +686,7 @@
       if (s.onHide) s.onHide();
       var t = this.top();
       t.el.classList.add('shown');
+      updateChrome();
       if (t.onReturn) t.onReturn();
       Nav.restore();
       return true;
@@ -650,6 +699,24 @@
   };
 
   function def(name, o) { o.el = $(name); o.name = name; Screens.defs[name] = o; return o; }
+
+  /** Shows the side menu on main sections and highlights the current one. */
+  function updateChrome() {
+    var top = null;
+    for (var i = Screens.stack.length - 1; i >= 0; i--) if (!Screens.stack[i].dialog) { top = Screens.stack[i]; break; }
+    var rail = !!(top && top.rail);
+    document.body.classList.toggle('has-rail', rail);
+    if (!rail) document.body.classList.remove('rail-open');
+    var items = RAIL.querySelectorAll('.rail-item[data-section]');
+    for (var j = 0; j < items.length; j++) items[j].classList.toggle('active', !!top && items[j].getAttribute('data-section') === (top.section || top.name));
+  }
+
+  /** Switches between the main sections (home, search, my channels, watched). */
+  function openSection(name, data) {
+    while (Screens.stack.length > 1 && Screens.top() !== Home) Screens.pop();
+    if (name === 'home') { if (!Nav.current || RAIL.contains(Nav.current)) Nav.restore(); return; }
+    Screens.push(name, data);
+  }
 
   // ---------------- Cards ----------------
   function fmtTime(sec) {
@@ -677,8 +744,28 @@
     return c;
   }
 
+  function icon(name) { return '<svg><use href="#i-' + name + '"/></svg>'; }
+
+  function skeletons(n) {
+    var frag = document.createDocumentFragment();
+    for (var i = 0; i < n; i++) {
+      var sk = h('div', 'skel');
+      sk.appendChild(h('div', 'thumb'));
+      sk.appendChild(h('div', 'line'));
+      frag.appendChild(sk);
+    }
+    return frag;
+  }
+
+  function emptyState(emoji, text) {
+    var e = h('div', 'empty');
+    e.appendChild(h('span', 'big', emoji));
+    e.appendChild(h('span', '', text));
+    return e;
+  }
+
   function makeChannelCard(ch) {
-    var c = h('div', 'card more f', 'Все видео →');
+    var c = h('div', 'card more f', t('row.allVideos'));
     c.appendChild(h('span', 'more-sub', ch.title));
     c._channel = ch;
     return c;
@@ -688,10 +775,12 @@
   var homeRows = [];
 
   var Home = def('home', {
+    rail: true,
     onShow: function () { homeDirty = false; buildHome(); },
     onReturn: function () { if (homeDirty) { homeDirty = false; buildHome(); } else renderHomeRows(); },
     onKey: function (k) {
-      if (k === 'back') return false; // exit app
+      // Back from the content jumps to the menu first; Back on the menu leaves the app.
+      if (k === 'back') return RAIL.contains(Nav.current) ? false : Nav.toRail();
       return null;
     }
   });
@@ -701,12 +790,12 @@
     box.innerHTML = '';
     homeRows = [];
     var subs = S.homeChannels.length ? loadSubscriptions() : null;
-    homeRows.push({ kind: 'recs', title: 'Для тебя', load: recommendations });
-    if (subs) homeRows.push({ kind: 'subs', title: 'Новое в подписках', load: function () { return subs.then(function (x) { return x.videos; }); } });
-    homeRows.push({ kind: 'history', title: 'Недавно смотрели' });
-    if (subs) homeRows.push({ kind: 'channels', title: 'Мои каналы', load: function () { return subs.then(function (x) { return x.channels; }); } });
+    homeRows.push({ kind: 'recs', icon: 'sparkle', title: t('row.forYou'), load: recommendations });
+    if (subs) homeRows.push({ kind: 'subs', icon: 'new', title: t('row.subs'), load: function () { return subs.then(function (x) { return x.videos; }); } });
+    homeRows.push({ kind: 'history', icon: 'history', title: t('row.again') });
+    if (subs) homeRows.push({ kind: 'channels', icon: 'tv', title: t('row.channels'), load: function () { return subs.then(function (x) { return x.channels; }); } });
     S.homeQueries.forEach(function (q) {
-      homeRows.push({ kind: 'query', title: q, load: function () { return searchVideos(q).then(function (res) { return res.items; }); } });
+      homeRows.push({ kind: 'query', icon: 'search', title: q, load: function () { return searchVideos(q).then(function (res) { return res.items; }); } });
     });
 
     homeRows.forEach(function (r) {
@@ -721,7 +810,7 @@
 
     if (!S.homeChannels.length && !S.homeQueries.length && !getHistory().length) {
       var tip = h('div', 'tip');
-      tip.innerHTML = '<b>Нажми на 🎤 и скажи, что хочешь посмотреть!</b><br>Чтобы видеть новые видео канала здесь, открой канал и нажми «Подписаться».';
+      tip.innerHTML = t('home.tip');
       box.appendChild(tip);
     }
     renderHomeRows();
@@ -779,18 +868,31 @@
       if (keep && r.cardsEl.contains(cur)) keepRow = r;
       r.cardsEl.innerHTML = '';
       r.el.style.display = '';
-      if (r.loading) { r.cardsEl.appendChild(h('div', 'spinner')); }
+      r.titleEl.innerHTML = icon(r.icon || 'sparkle');
+      r.titleEl.appendChild(document.createTextNode(r.title));
+      if (r.loading) { r.cardsEl.appendChild(skeletons(4)); }
       else if (r.error) { r.cardsEl.appendChild(h('div', 'row-msg', r.error)); }
       else if (!items.length) {
         if (r.kind !== 'query') { r.el.style.display = 'none'; return; }
-        r.cardsEl.appendChild(h('div', 'row-msg', 'Здесь пока ничего нет'));
+        r.cardsEl.appendChild(h('div', 'row-msg', t('row.empty')));
       } else if (r.kind === 'channels') {
         items.forEach(function (ch) { r.cardsEl.appendChild(makeChannelTile(ch)); });
       } else {
         items.slice(0, 30).forEach(function (v, i) { r.cardsEl.appendChild(makeCard(v, items, i)); });
+        if (r.kind === 'history' && items.length > 4) {
+          var all = h('div', 'card more f', t('row.all'));
+          all.appendChild(h('span', 'more-sub', t('row.allSub')));
+          all._section = 'library';
+          r.cardsEl.appendChild(all);
+        }
       }
     });
     if (Screens.top() !== Home) return;
+    // Until the child moves, keep focus on the first video so OK starts something right away.
+    if (!Home.userMoved) {
+      var firstCard = $('homeRows').querySelector('.card.f');
+      if (firstCard) { Nav.set(firstCard); return; }
+    }
     if (keepRow) {
       var cards = keepRow.cardsEl.querySelectorAll('.card');
       for (var i = 0; i < cards.length; i++) if (cardKey(cards[i]) === keep) { Nav.set(cards[i]); return; }
@@ -802,19 +904,55 @@
   // ---------------- Results ----------------
   var R = { q: '', items: [], next: null, loading: false, error: null };
 
-  var Results = def('results', {
+  var Results = def('search', {
+    rail: true,
     onShow: function (q) {
-      $('resultsSearch').value = q;
-      runSearch(q);
+      if (q) runSearch(q);
+      else { R = { q: '', items: [], next: null, loading: false, error: null }; $('resultsSearch').value = ''; renderResults(true); }
     },
     onReturn: function () { renderResults(); }
   });
+
+
+  function recentQueries() { try { return JSON.parse(localStorage.getItem('recentQ') || '[]'); } catch (e) { return []; } }
+  function rememberQuery(q) {
+    var list = recentQueries().filter(function (x) { return norm(x) !== norm(q); });
+    list.unshift(q);
+    try { localStorage.setItem('recentQ', JSON.stringify(list.slice(0, 6))); } catch (e) {}
+  }
+
+  /** Idle search screen: big mic plus one-press chips (recent searches and ideas) — no typing needed. */
+  function renderSearchIdle() {
+    var idle = !R.q;
+    $('searchIdle').style.display = idle ? '' : 'none';
+    if (!idle) return;
+    var box = $('searchChips');
+    box.innerHTML = '';
+    var recent = recentQueries().filter(function (q) { return !queryBlocked(q); });
+    $('chipsTitle').textContent = recent.length ? t('search.recentIdeas') : t('search.ideas');
+    recent.forEach(function (q) { box.appendChild(makeChip('🕘', q)); });
+    t('sugg').forEach(function (sg) { if (recent.indexOf(sg[1]) < 0) box.appendChild(makeChip(sg[0], sg[1])); });
+  }
+
+  function makeChip(emoji, q) {
+    var c = h('button', 'chip f');
+    c.appendChild(h('span', 'ico', emoji));
+    c.appendChild(h('span', '', q));
+    c._query = q;
+    return c;
+  }
+
+  function openSearch(q) {
+    if (Screens.top() === Results) { if (q) runSearch(q); return; }
+    openSection('search', q);
+  }
 
   function runSearch(q) {
     q = String(q || '').trim();
     if (!q) return;
     R = { q: q, items: [], next: null, loading: true, error: null };
     $('resultsSearch').value = q;
+    rememberQuery(q);
     renderResults(true);
     if (queryBlocked(q)) { R.loading = false; renderResults(true); return; }
     searchVideos(q).then(function (res) {
@@ -845,7 +983,14 @@
   }
 
   function renderResults(resetFocus) {
-    renderGrid(Results, $('resultsGrid'), $('resultsStatus'), R, resetFocus, 'Ничего не нашлось. Попробуй сказать по‑другому 🙂');
+    renderSearchIdle();
+    if (!R.q) {
+      $('resultsGrid').innerHTML = '';
+      $('resultsStatus').innerHTML = '';
+      if (Screens.top() === Results && (!Nav.current || !document.body.contains(Nav.current))) Nav.first();
+      return;
+    }
+    renderGrid(Results, $('resultsGrid'), $('resultsStatus'), R, resetFocus, ['🙈', t('search.none')]);
   }
 
   /** Shared grid renderer for search results and channel pages. state: {items, next, loading, error}. */
@@ -859,13 +1004,14 @@
     var items = allowed(st.items);
     items.forEach(function (v, i) { grid.appendChild(makeCard(v, items, i)); });
     if (st.next && !st.loading && !st.error) {
-      var more = h('div', 'card more f', 'Ещё →');
+      var more = h('div', 'card more f', t('more'));
       more._more = true;
       grid.appendChild(more);
     }
-    if (st.loading) status.appendChild(h('div', 'spinner'));
-    else if (st.error) status.textContent = st.error;
-    else if (!items.length) status.textContent = emptyText;
+    if (st.loading && !items.length) grid.appendChild(skeletons(8));
+    else if (st.loading) status.appendChild(h('div', 'spinner'));
+    else if (st.error) status.appendChild(emptyState('📡', st.error));
+    else if (!items.length) status.appendChild(emptyState(emptyText[0], emptyText[1]));
 
     if (Screens.top() !== screen) return;
     var cards = grid.querySelectorAll('.card');
@@ -877,10 +1023,49 @@
     if (!Nav.current || !document.body.contains(Nav.current)) Nav.first();
   }
 
+  // ---------------- Watched ("Я смотрел") ----------------
+  var Library = def('library', {
+    rail: true,
+    onShow: function () { renderLibrary(true); },
+    onReturn: function () { renderLibrary(false); }
+  });
+
+  function renderLibrary(resetFocus) {
+    renderGrid(Library, $('libGrid'), $('libStatus'), { items: getHistory() }, resetFocus, ['📺', t('watched.empty')]);
+  }
+
+  // ---------------- My channels ----------------
+  var MyChannels = def('mychannels', {
+    rail: true,
+    onShow: function () { renderMyChannels(null, true); loadMyChannels(); },
+    onReturn: function () { if (homeDirty) loadMyChannels(); }
+  });
+
+  function loadMyChannels() {
+    if (!S.homeChannels.length) { renderMyChannels([], true); return; }
+    loadSubscriptions().then(function (x) { renderMyChannels(x.channels, true); }, function () { renderMyChannels([], true); });
+  }
+
+  function renderMyChannels(chs, resetFocus) {
+    var grid = $('mcGrid'), status = $('mcStatus');
+    grid.innerHTML = '';
+    status.innerHTML = '';
+    if (chs === null) { grid.appendChild(skeletons(5)); return; }
+    if (!chs.length) status.appendChild(emptyState('⭐', t('channels.empty')));
+    chs.forEach(function (ch) { grid.appendChild(makeChannelTile(ch)); });
+    if (Screens.top() === MyChannels && resetFocus && !MyChannels.userMoved) {
+      var first = grid.querySelector('.f');
+      Nav.set(first || null);
+      if (!first) Nav.toRail();
+    }
+  }
+
   // ---------------- Channel page ----------------
   var C = { ch: null, items: [], next: null, loading: false, error: null };
 
   var Channel = def('channel', {
+    rail: true,
+    section: 'mychannels',
     onShow: function (ref) { loadChannel(ref); },
     onReturn: function () { renderChannel(false); }
   });
@@ -900,14 +1085,14 @@
   function updateSubButton() {
     var on = subscribedIndex(C.id) >= 0;
     var b = $('chanSub');
-    b.textContent = on ? '✓ Вы подписаны' : '⭐ Подписаться';
+    b.innerHTML = icon(on ? 'check' : 'star') + '<span>' + (on ? t('channel.subscribed') : t('channel.subscribe')) + '</span>';
     b.classList.toggle('on', on);
   }
 
   function toggleSubscribe(id) {
     var i = subscribedIndex(id);
-    if (i >= 0) { S.homeChannels.splice(i, 1); toast('Подписка отменена'); }
-    else { S.homeChannels.push('https://www.youtube.com/channel/' + id); toast('Подписка оформлена ⭐ Новые видео канала появятся на главной'); }
+    if (i >= 0) { S.homeChannels.splice(i, 1); toast(t('channel.unsubscribedToast')); }
+    else { S.homeChannels.push('https://www.youtube.com/channel/' + id); toast(t('channel.subscribedToast')); }
     saveSettings();
     homeDirty = true;
   }
@@ -918,7 +1103,7 @@
 
   /** ref: channel object, {id} or {id, title} taken from a video. */
   function openChannel(ref) {
-    if (channelBlocked(ref.id, ref.title)) { toast('Этот канал недоступен'); return; }
+    if (channelBlocked(ref.id, ref.title)) { toast(t('channel.unavailable')); return; }
     if (Screens.top() === Player) Screens.pop();
     Screens.push('channel', ref);
   }
@@ -964,7 +1149,7 @@
   }
 
   function renderChannel(resetFocus) {
-    renderGrid(Channel, $('chanGrid'), $('chanStatus'), C, resetFocus, 'На этом канале пока нечего посмотреть');
+    renderGrid(Channel, $('chanGrid'), $('chanStatus'), C, resetFocus, ['📭', t('channel.empty')]);
   }
 
   // ---------------- Player ----------------
@@ -1038,14 +1223,14 @@
       P.yt = new YT.Player('yt', {
         videoId: v.id,
         width: '100%', height: '100%',
-        playerVars: { autoplay: 1, controls: 0, disablekb: 1, fs: 0, rel: 0, iv_load_policy: 3, playsinline: 1, modestbranding: 1, cc_load_policy: 0, hl: 'ru', origin: location.origin },
+        playerVars: { autoplay: 1, controls: 0, disablekb: 1, fs: 0, rel: 0, iv_load_policy: 3, playsinline: 1, modestbranding: 1, cc_load_policy: 0, hl: S.lang, origin: location.origin },
         events: {
           onReady: function (e) { if (Screens.top() === Player) e.target.playVideo(); },
           onStateChange: onPlayerState,
           onError: onPlayerError
         }
       });
-    }, function () { showPlayerMsg('Не удалось загрузить плеер YouTube. Проверьте интернет.'); });
+    }, function () { showPlayerMsg(t('player.loadFail')); });
     clearInterval(P.tick);
     P.tick = setInterval(updateOsd, 500);
   }
@@ -1060,7 +1245,7 @@
     } else if (st === 2) { // paused
       P.paused = true;
       Native.keepScreenOn(false);
-      $('osdIcon').textContent = '❚❚';
+      $('osdIcon').innerHTML = icon('pause');
       $('osd').classList.add('paused');
       showOsd(true);
     } else if (st === 0) { // ended
@@ -1071,7 +1256,7 @@
   }
 
   function onPlayerError() {
-    showPlayerMsg('Это видео здесь не показывается 🙈');
+    showPlayerMsg(t('player.unavailable'));
     setTimeout(function () { if (Screens.top() === Player) playNext(); }, 2500);
   }
 
@@ -1086,8 +1271,8 @@
   function relatedState(v) {
     if (P.rel && P.rel.id === v.id) return P.rel;
     var rel = P.rel = { id: v.id, rows: [
-      { key: 'similar', title: 'Похожие видео', loading: true },
-      { key: 'channel', title: 'Ещё с канала «' + v.channelTitle + '»', loading: true }
+      { key: 'similar', title: t('rel.similar'), loading: true },
+      { key: 'channel', title: t('rel.moreFrom', v.channelTitle), loading: true }
     ] };
     relatedVideos(v).then(function (items) { rel.rows[0].items = items; }, function (e) { rel.rows[0].error = apiErrorText(e); })
       .then(function () { rel.rows[0].loading = false; if (P.rel === rel) renderRelated(); });
@@ -1110,7 +1295,7 @@
     var btn = $('relChannelBtn');
     btn.innerHTML = '';
     if (P.rel.ch && P.rel.ch.thumb) { var im = h('img'); im.src = P.rel.ch.thumb; btn.appendChild(im); }
-    btn.appendChild(document.createTextNode('Канал «' + P.video.channelTitle + '»'));
+    btn.appendChild(document.createTextNode(t('rel.channelBtn', P.video.channelTitle)));
     btn.style.display = channelBlocked(P.video.channelId, P.video.channelTitle) ? 'none' : '';
     renderRelated(true);
   }
@@ -1138,7 +1323,7 @@
       var cards = h('div', 'row-cards');
       if (r.loading) cards.appendChild(h('div', 'spinner'));
       else if (r.error) cards.appendChild(h('div', 'row-msg', r.error));
-      else if (!items.length) cards.appendChild(h('div', 'row-msg', 'Ничего подходящего не нашлось'));
+      else if (!items.length) cards.appendChild(h('div', 'row-msg', t('rel.none')));
       items.slice(0, 30).forEach(function (v, i) {
         var c = makeCard(v, items, i);
         if (keepId && v.id === keepId) target = c;
@@ -1159,21 +1344,21 @@
   function togglePause() {
     if (!P.yt || !P.yt.getPlayerState) return;
     if (P.yt.getPlayerState() === 1) P.yt.pauseVideo();
-    else { P.yt.playVideo(); flashIcon('▶'); }
+    else { P.yt.playVideo(); flashIcon('play'); }
   }
 
   function seek(delta) {
     if (!P.yt || !P.yt.getCurrentTime) return;
     var t = Math.max(0, P.yt.getCurrentTime() + delta);
     P.yt.seekTo(t, true);
-    flashIcon(delta > 0 ? '⏩' : '⏪');
+    flashIcon(delta > 0 ? 'ff' : 'rew');
     showOsd();
     updateOsd();
   }
 
   function flashIcon(sym) {
     var ic = $('osdIcon');
-    ic.textContent = sym;
+    ic.innerHTML = icon(sym);
     ic.classList.add('flash');
     clearTimeout(ic._t);
     ic._t = setTimeout(function () { ic.classList.remove('flash'); }, 700);
@@ -1204,7 +1389,7 @@
     dialog: true,
     onShow: function (o) {
       pinCallback = o.done;
-      $('pinTitle').textContent = o.title || 'Введите PIN родителя';
+      $('pinTitle').textContent = o.title || t('pin.title');
       $('pinInput').value = '';
       $('pinErr').textContent = '';
       Nav.set($('pinInput'));
@@ -1226,7 +1411,7 @@
       Screens.pop();
       if (cb) cb();
     } else {
-      $('pinErr').textContent = 'Неверный PIN';
+      $('pinErr').textContent = t('pin.wrong');
       $('pinInput').value = '';
     }
   }
@@ -1235,23 +1420,23 @@
   var Menu = def('menu', { dialog: true });
 
   function openParentMenu(v) {
-    requirePin('PIN для родительского меню', function () {
+    requirePin(t('pin.menu'), function () {
       $('menuTitle').textContent = v.title;
       var list = $('menuList');
       list.innerHTML = '';
       var opts = [
-        ['🚫 Заблокировать это видео', function () {
+        [t('menu.blockVideo'), function () {
           if (S.blockedVideos.indexOf(v.id) < 0) S.blockedVideos.push(v.id);
-          saveSettings(); toast('Видео заблокировано'); afterBlock();
+          saveSettings(); toast(t('toast.videoBlocked')); afterBlock();
         }],
-        ['🚫 Заблокировать канал «' + v.channelTitle + '»', function () {
+        [t('menu.blockChannel', v.channelTitle), function () {
           S.blockedChannels.push(v.channelId ? 'https://www.youtube.com/channel/' + v.channelId : v.channelTitle);
-          saveSettings(); toast('Канал заблокирован'); afterBlock();
+          saveSettings(); toast(t('toast.channelBlocked')); afterBlock();
         }],
-        [subscribedIndex(v.channelId) >= 0 ? '✓ Отписаться от канала' : '⭐ Подписаться на канал', function () {
+        [subscribedIndex(v.channelId) >= 0 ? t('menu.unsubscribe') : t('menu.subscribe'), function () {
           toggleSubscribe(v.channelId); Screens.pop();
         }],
-        ['Отмена', function () { Screens.pop(); }]
+        [t('cancel'), function () { Screens.pop(); }]
       ];
       opts.forEach(function (o) {
         var b = h('button', 'btn f', o[0]);
@@ -1288,7 +1473,7 @@
     try { url = Native.remoteUrl() || ''; } catch (e) {}
     if (!url) {
       // The server may still be starting; try again shortly.
-      $(urlId).textContent = 'Подключите телевизор к Wi‑Fi…';
+      $(urlId).textContent = t('setup.wifi');
       setTimeout(function () { if ($(urlId).offsetParent) showRemote(qrId, urlId, size); }, 1500);
       return;
     }
@@ -1303,29 +1488,30 @@
 
   // ---------------- Settings (TV) ----------------
   var FIELDS = [
-    { key: 'apiKey', label: 'Ключ YouTube Data API', type: 'text' },
-    { key: 'pin', label: 'PIN родителя (4–8 цифр)', type: 'pin' },
-    { section: 'Блокировка' },
-    { key: 'blockedWords', label: 'Запрещённые слова (через запятую)', type: 'list', hint: 'Часть слова тоже работает: «страш» скроет «страшный», «страшилки».' },
-    { key: 'blockedChannels', label: 'Заблокированные каналы (@имя, ссылка или название, через запятую)', type: 'list' },
-    { key: 'blockedVideos', label: 'Заблокированные видео (ссылки или ID)', type: 'list' },
-    { key: 'checkTitle', label: 'Искать слова в названии', type: 'bool' },
-    { key: 'checkTags', label: 'Искать слова в тегах', type: 'bool' },
-    { key: 'checkDescription', label: 'Искать слова в описании', type: 'bool' },
-    { key: 'checkChannel', label: 'Искать слова в названии канала', type: 'bool' },
-    { key: 'onlyKids', label: 'Только видео с пометкой «для детей»', type: 'bool' },
-    { key: 'hideShort', label: 'Скрывать очень короткие видео (до 1 мин)', type: 'bool' },
-    { section: 'Главный экран' },
-    { key: 'homeChannels', label: 'Подписки — каналы на главной (@имя или ссылка, через запятую)', type: 'list' },
-    { key: 'homeQueries', label: 'Подборки по запросам (через запятую)', type: 'list' },
-    { key: 'autoplayNext', label: 'Автоматически включать следующее видео', type: 'bool' }
+    { key: 'lang', label: 'f.lang', type: 'choice', options: I18N.languages },
+    { key: 'apiKey', label: 'f.apiKey', type: 'text' },
+    { key: 'pin', label: 'f.pin', type: 'pin' },
+    { section: 'f.secBlock' },
+    { key: 'blockedWords', label: 'f.words', type: 'list', hint: 'f.wordsHint' },
+    { key: 'blockedChannels', label: 'f.channels', type: 'list' },
+    { key: 'blockedVideos', label: 'f.videos', type: 'list' },
+    { key: 'checkTitle', label: 'f.checkTitle', type: 'bool' },
+    { key: 'checkTags', label: 'f.checkTags', type: 'bool' },
+    { key: 'checkDescription', label: 'f.checkDescription', type: 'bool' },
+    { key: 'checkChannel', label: 'f.checkChannel', type: 'bool' },
+    { key: 'onlyKids', label: 'f.onlyKids', type: 'bool' },
+    { key: 'hideShort', label: 'f.hideShort', type: 'bool' },
+    { section: 'f.secHome' },
+    { key: 'homeChannels', label: 'f.homeChannels', type: 'list' },
+    { key: 'homeQueries', label: 'f.homeQueries', type: 'list' },
+    { key: 'autoplayNext', label: 'f.autoplay', type: 'bool' }
   ];
 
   var Settings = def('settings', {
     onShow: function () {
       showRemote('settingsQr', 'settingsUrl', 7);
       renderUpdate();
-      $('quotaInfo').textContent = 'Использовано квоты сегодня: ~' + quotaUsed() + ' из 10 000 · версия ' + Native.version();
+      $('quotaInfo').textContent = t('set.quota', quotaUsed(), Native.version());
       buildSettingsForm();
       this.el.querySelector('.scroller').scrollTop = 0;
     }
@@ -1335,25 +1521,41 @@
     var form = $('settingsForm');
     form.innerHTML = '';
     FIELDS.forEach(function (f) {
-      if (f.section) { form.appendChild(h('div', 'section-title', f.section)); return; }
+      if (f.section) { form.appendChild(h('div', 'section-title', t(f.section))); return; }
       if (f.type === 'bool') {
-        var t = h('button', 'toggle f' + (S[f.key] ? ' on' : ''));
-        t.appendChild(h('span', '', f.label));
-        t.appendChild(h('span', 'sw'));
-        t._field = f;
-        t._value = !!S[f.key];
-        form.appendChild(t);
+        var tg = h('button', 'toggle f' + (S[f.key] ? ' on' : ''));
+        tg.appendChild(h('span', '', t(f.label)));
+        tg.appendChild(h('span', 'sw'));
+        tg._field = f;
+        tg._value = !!S[f.key];
+        form.appendChild(tg);
+        return;
+      }
+      if (f.type === 'choice') {
+        var ch = h('button', 'toggle choice f');
+        ch.appendChild(h('span', '', t(f.label)));
+        ch._val = h('span', 'choice-val');
+        ch.appendChild(ch._val);
+        ch._field = f;
+        ch._value = S[f.key];
+        ch._show = function () {
+          var self = this;
+          var o = f.options.filter(function (x) { return x[0] === self._value; })[0] || f.options[0];
+          this._val.textContent = '◀ ' + o[1] + ' ▶';
+        };
+        ch._show();
+        form.appendChild(ch);
         return;
       }
       var box = h('div', 'field f');
-      box.appendChild(h('label', '', f.label));
+      box.appendChild(h('label', '', t(f.label)));
       var inp = h('input');
       inp.type = f.type === 'pin' ? 'text' : 'text';
       if (f.type === 'pin') inp.inputMode = 'numeric';
       inp.value = f.type === 'list' ? S[f.key].join(', ') : (S[f.key] || '');
       inp.autocomplete = 'off';
       box.appendChild(inp);
-      if (f.hint) box.appendChild(h('div', 'hint', f.hint));
+      if (f.hint) box.appendChild(h('div', 'hint', t(f.hint)));
       box._field = f;
       form.appendChild(box);
     });
@@ -1366,22 +1568,23 @@
     for (var i = 0; i < nodes.length; i++) {
       var n = nodes[i], f = n._field;
       if (!f) continue;
-      if (f.type === 'bool') next[f.key] = n._value;
+      if (f.type === 'bool' || f.type === 'choice') next[f.key] = n._value;
       else if (f.type === 'list') next[f.key] = toList(n.querySelector('input').value);
       else next[f.key] = n.querySelector('input').value.trim();
     }
-    if (!/^\d{4,8}$/.test(next.pin)) { toast('PIN должен состоять из 4–8 цифр'); return; }
-    if (!next.apiKey) { toast('Укажите ключ YouTube API'); return; }
+    if (!/^\d{4,8}$/.test(next.pin)) { toast(t('toast.pinFormat')); return; }
+    if (!next.apiKey) { toast(t('toast.needKey')); return; }
     for (var k in next) S[k] = next[k];
     S.blockedVideos = S.blockedVideos.map(videoIdFrom).filter(Boolean);
     saveSettings();
+    applyLanguage();
     Native.hideKeyboard();
-    toast('Сохранено ✓');
+    toast(t('toast.saved'));
     goHome();
   }
 
   function openSettings() {
-    requirePin('PIN для настроек', function () { Screens.push('settings'); });
+    requirePin(t('pin.settings'), function () { Screens.push('settings'); });
   }
 
   function goHome() {
@@ -1406,8 +1609,7 @@
     if (!q) return;
     inp.blur();
     Native.hideKeyboard();
-    if (Screens.top() === Results) runSearch(q);
-    else Screens.push('results', q);
+    openSearch(q);
   }
 
   // Enter / "search" on the on-screen keyboard.
@@ -1415,7 +1617,7 @@
     var t = e.target;
     if (t && t.tagName === 'INPUT' && (e.key === 'Enter' || e.keyCode === 13)) {
       e.preventDefault();
-      if (t.id === 'homeSearch' || t.id === 'resultsSearch') doSearchFrom(t);
+      if (t.id === 'resultsSearch') doSearchFrom(t);
       else if (t.id === 'pinInput') submitPin();
       else { t.blur(); Native.hideKeyboard(); }
     }
@@ -1426,6 +1628,13 @@
   // ===================================================================================
   function activate(el) {
     if (!el) return;
+    // Short "pressed" feedback so the child sees the button reacted.
+    el.classList.add('pressed');
+    setTimeout(function () { el.classList.remove('pressed'); }, 140);
+    var section = el.getAttribute && el.getAttribute('data-section');
+    if (section) { openSection(section); return; }
+    if (el._section) { openSection(el._section); return; }
+    if (el._query) { runSearch(el._query); return; }
     if (el._video) {
       if (Screens.top() === Player) { closeRelated(); P.list = el._list; P.index = el._index; startVideo(); }
       else play(el._list, el._index);
@@ -1434,6 +1643,13 @@
     if (el._channel) { openChannel(el._channel); return; }
     if (el._more) { if (Screens.top() === Channel) loadMoreChannel(); else loadMore(); return; }
     if (el._run) { el._run(); return; }
+    if (el._field && el._field.type === 'choice') {
+      var opts = el._field.options, idx = 0;
+      for (var oi = 0; oi < opts.length; oi++) if (opts[oi][0] === el._value) idx = oi;
+      el._value = opts[(idx + 1) % opts.length][0];
+      el._show();
+      return;
+    }
     if (el._field && el._field.type === 'bool') {
       el._value = !el._value;
       el.classList.toggle('on', el._value);
@@ -1452,8 +1668,8 @@
     if (action === 'subscribe') { if (C.id) { toggleSubscribe(C.id); updateSubButton(); } return; }
     if (action === 'rel-close') return closeRelated();
     if (action === 'rel-channel') return openChannel(P.rel && P.rel.ch ? P.rel.ch : { id: P.video.channelId, title: P.video.channelTitle });
-    if (action === 'clear-cache') { pruneCache(true); toast('Кэш очищен'); return; }
-    if (action === 'clear-history') { Native.clearHistory(); toast('История очищена'); return; }
+    if (action === 'clear-cache') { pruneCache(true); toast(t('toast.cacheCleared')); return; }
+    if (action === 'clear-history') { Native.clearHistory(); toast(t('toast.historyCleared')); return; }
     if (inp) openKeyboard(inp);
   }
 
@@ -1493,26 +1709,26 @@
     onVoice: function (text) {
       text = String(text || '').trim();
       if (!text) return;
-      if (Screens.top() === Results) runSearch(text);
-      else if (Screens.top() === Home) Screens.push('results', text);
-      else { $('homeSearch').value = text; }
+      var top = Screens.top();
+      if (top === Player || top.dialog) return;
+      openSearch(text);
     },
     onNative: function (id, ok, data) {
       var cb = nativeCalls[id];
       delete nativeCalls[id];
       if (cb) cb(ok, data);
     },
-    onUpdateProgress: function (p) { if (Upd.busy) updInfo('Скачиваю обновление… ' + p + '%'); },
+    onUpdateProgress: function (p) { if (Upd.busy) updInfo(t('upd.progress', p)); },
     onUpdateError: function (msg) { Upd.busy = false; updInfo(msg); toast(msg); },
-    onVoiceError: function () { toast('Голосовой поиск недоступен на этом устройстве'); },
+    onVoiceError: function () { toast(t('toast.noVoice')); },
     onPause: function () { try { if (P.yt && Screens.top() === Player) P.yt.pauseVideo(); } catch (e) {} },
     onSettingsChanged: function () {
       loadSettings();
       var top = Screens.top();
-      if (top === Setup || top === Settings) { toast('Настройки сохранены с телефона ✓'); goHome(); return; }
+      if (top === Setup || top === Settings) { toast(t('toast.remoteSaved')); goHome(); return; }
       if (Screens.stack.indexOf(Home) >= 0) buildHome();
       refreshVisible();
-      toast('Настройки обновлены ✓');
+      toast(t('toast.updated'));
     }
   };
 

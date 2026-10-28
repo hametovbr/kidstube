@@ -14,7 +14,7 @@ android {
         targetSdk 34
         // CI builds always get a higher version so they install over older ones.
         versionCode 100 + buildNumber
-        versionName "1.3.${buildNumber}"
+        versionName "1.4.${buildNumber}"
     }
 
     signingConfigs {

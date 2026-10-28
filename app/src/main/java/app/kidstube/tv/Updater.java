@@ -66,8 +66,9 @@ final class Updater {
             conn.setRequestProperty("Accept", "application/vnd.github+json");
             conn.setRequestProperty("User-Agent", "KidsTube-Updater");
             int code = conn.getResponseCode();
-            if (code == 404) throw new Exception("На GitHub нет опубликованной версии (или репозиторий закрыт)");
-            if (code != 200) throw new Exception("GitHub ответил " + code);
+            if (code == 404) throw new Exception(Store.tr(c, "No published version on GitHub (or the repository is private)",
+                    "На GitHub нет опубликованной версии (или репозиторий закрыт)"));
+            if (code != 200) throw new Exception(Store.tr(c, "GitHub answered ", "GitHub ответил ") + code);
             rel = new JSONObject(readAll(conn.getInputStream()));
         } finally {
             conn.disconnect();
@@ -116,7 +117,7 @@ final class Updater {
             conn.setReadTimeout(30000);
             conn.setRequestProperty("User-Agent", "KidsTube-Updater");
             int code = conn.getResponseCode();
-            if (code != 200) throw new Exception("Не удалось скачать обновление (" + code + ")");
+            if (code != 200) throw new Exception(Store.tr(c, "Could not download the update (", "Не удалось скачать обновление (") + code + ")");
             long total = conn.getContentLength();
             InputStream in = conn.getInputStream();
             OutputStream out = new FileOutputStream(apk);

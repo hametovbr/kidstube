@@ -118,13 +118,14 @@ public class MainActivity extends Activity {
                 try {
                     startActivity(confirm);
                 } catch (Exception e) {
-                    js("window.kt && kt.onUpdateError('Не удалось открыть установщик')");
+                    js("window.kt && kt.onUpdateError(" + JSONObject.quote(Store.tr(this, "Could not open the installer", "Не удалось открыть установщик")) + ")");
                 }
             }
         } else if (status != PackageInstaller.STATUS_SUCCESS) {
             String msg = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
             js("window.kt && kt.onUpdateError(" + JSONObject.quote(status == PackageInstaller.STATUS_FAILURE_ABORTED
-                    ? "Установка отменена" : "Установка не удалась" + (msg == null ? "" : ": " + msg)) + ")");
+                    ? Store.tr(this, "Installation cancelled", "Установка отменена")
+                    : Store.tr(this, "Installation failed", "Установка не удалась") + (msg == null ? "" : ": " + msg)) + ")");
         }
     }
 
@@ -284,9 +285,10 @@ public class MainActivity extends Activity {
                 public void run() {
                     String ok = "false", payload;
                     try {
+                        String lang = Store.lang(MainActivity.this);
                         JSONObject res = "related".equals(kind)
-                                ? InnerTube.related(arg)
-                                : InnerTube.search(arg, continuation);
+                                ? InnerTube.related(arg, lang)
+                                : InnerTube.search(arg, continuation, lang);
                         ok = "true";
                         payload = res.toString();
                     } catch (Throwable e) {
@@ -401,8 +403,9 @@ public class MainActivity extends Activity {
                 public void run() {
                     Intent i = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
                     i.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-                    i.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "ru-RU");
-                    i.putExtra(RecognizerIntent.EXTRA_PROMPT, "Что ищем?");
+                    boolean ru = "ru".equals(Store.lang(MainActivity.this));
+                    i.putExtra(RecognizerIntent.EXTRA_LANGUAGE, ru ? "ru-RU" : "en-US");
+                    i.putExtra(RecognizerIntent.EXTRA_PROMPT, ru ? "Что ищем?" : "What shall we watch?");
                     try {
                         startActivityForResult(i, REQ_VOICE);
                     } catch (ActivityNotFoundException e) {
