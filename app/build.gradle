@@ -17,23 +17,25 @@ android {
         versionName "1.4.${buildNumber}"
     }
 
+    // Release builds are signed with the private key kept in GitHub Actions secrets
+    // (KEYSTORE_BASE64 / KEYSTORE_PASSWORD). Without it, local builds use the debug key.
+    def releaseKeystore = System.getenv('KIDSTUBE_KEYSTORE')
+
     signingConfigs {
-        // One shared key for every build, so updates install over the previous version.
-        shared {
-            storeFile file('kidstube.keystore')
-            storePassword 'kidstube'
-            keyAlias 'kidstube'
-            keyPassword 'kidstube'
+        if (releaseKeystore) {
+            release {
+                storeFile file(releaseKeystore)
+                storePassword System.getenv('KIDSTUBE_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('KIDSTUBE_KEY_ALIAS') ?: 'kidstube'
+                keyPassword System.getenv('KIDSTUBE_KEYSTORE_PASSWORD')
+            }
         }
     }
 
     buildTypes {
         release {
             minifyEnabled false
-            signingConfig signingConfigs.shared
-        }
-        debug {
-            signingConfig signingConfigs.shared
+            signingConfig releaseKeystore ? signingConfigs.release : signingConfigs.debug
         }
     }
 

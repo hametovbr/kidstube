@@ -11,6 +11,40 @@ An app for Android TV boxes. Your child searches for videos on their own (by voi
 
 The interface is available in **English** (default) and **Russian** — switch it in the parent settings.
 
+## Screenshots
+
+*Demo content; in the app you see real YouTube videos.*
+
+<table>
+<tr>
+<td width="50%"><img src="docs/screenshots/home.png" alt="Home: “For you”, new videos from subscribed channels, watch again"><br><sub>Home: “For you”, new videos from subscribed channels, watch again</sub></td>
+<td width="50%"><img src="docs/screenshots/menu.png" alt="Side menu (◀ at the left edge)"><br><sub>Side menu (◀ at the left edge)</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/screenshots/search.png" alt="Search: big microphone and one-press ideas"><br><sub>Search: big microphone and one-press ideas</sub></td>
+<td width="50%"><img src="docs/screenshots/results.png" alt="Search results — already filtered"><br><sub>Search results — already filtered</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/screenshots/player.png" alt="Player: pause and seek with the remote"><br><sub>Player: pause and seek with the remote</sub></td>
+<td width="50%"><img src="docs/screenshots/up-next.png" alt="▼ while watching: up next and more from the channel"><br><sub>▼ while watching: up next and more from the channel</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/screenshots/channel.png" alt="Channel page with the Subscribe button"><br><sub>Channel page with the Subscribe button</sub></td>
+<td width="50%"><img src="docs/screenshots/my-channels.png" alt="My channels"><br><sub>My channels</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/screenshots/watched.png" alt="Watched"><br><sub>Watched</sub></td>
+<td width="50%"><img src="docs/screenshots/parent-menu.png" alt="Parent menu (long-press OK, PIN): block a video or channel"><br><sub>Parent menu (long-press OK, PIN): block a video or channel</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/screenshots/tv-settings.png" alt="Parent settings on the TV: updates, language, filters"><br><sub>Parent settings on the TV: updates, language, filters</sub></td>
+</tr>
+</table>
+
+<p><img src="docs/screenshots/phone-settings.png" width="280" alt="Phone: settings"> <img src="docs/screenshots/phone-history.png" width="280" alt="Phone: watch history with one-tap blocking"></p>
+
+<sub>Phone: settings · Phone: watch history with one-tap blocking</sub>
+
 ## What the child sees
 
 A side menu (press ◀ at the left edge of any screen) with four sections:
@@ -123,4 +157,13 @@ The TV interface follows the Android TV and Fire TV design guidelines:
 
 GitHub Actions builds the APK on every push to `main` and publishes it as the `latest` release (the release notes contain `versionCode: N`, which the updater reads). Locally: `gradle :app:assembleRelease` (JDK 17 and Android SDK 34).
 
-All builds are signed with the same key, `app/kidstube.keystore`, so a new version installs over the old one and keeps the settings. The key is committed on purpose for simplicity; since the repository is public, anyone could sign an APK with it. For a stricter setup, move the keystore into a GitHub Actions secret.
+### Signing key
+
+Release APKs are signed in CI with a private key that is **not** in the repository. It lives in two repository secrets (Settings → Secrets and variables → Actions):
+
+| Secret | Value |
+|---|---|
+| `KEYSTORE_BASE64` | the keystore file, base64-encoded (`base64 -w0 kidstube-release.jks`) |
+| `KEYSTORE_PASSWORD` | the keystore and key password (key alias `kidstube`) |
+
+Every build is signed with the same key, so a new version installs over the old one and keeps the settings. Keep a backup of the keystore and password: if they are lost, the next version can only be installed after uninstalling the app. Without the secrets (for example, a local build) the release APK is signed with the debug key.
