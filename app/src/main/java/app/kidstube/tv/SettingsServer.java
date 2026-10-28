@@ -146,6 +146,15 @@ final class SettingsServer implements Runnable {
                     send(out, 200, "application/json; charset=utf-8",
                             "{\"ok\":true,\"history\":" + Store.getHistory(act) + "}");
                 }
+            } else if (method.equals("POST") && path.startsWith("/api/app/")) {
+                // App actions from the phone: status, updates, clearing history and cache.
+                JSONObject req = new JSONObject(bodyText);
+                String err = checkPin(req.optString("pin", ""));
+                if (err != null) {
+                    sendJson(out, 403, error(err));
+                } else {
+                    sendJson(out, 200, appAction(path.substring("/api/app/".length())));
+                }
             } else if (method.equals("POST") && path.equals("/api/save")) {
                 JSONObject req = new JSONObject(bodyText);
                 String err = checkPin(req.optString("pin", ""));
@@ -177,6 +186,35 @@ final class SettingsServer implements Runnable {
             } catch (IOException ignored) {
             }
         }
+    }
+
+    private JSONObject appAction(String action) throws Exception {
+        JSONObject res = new JSONObject();
+        res.put("ok", true);
+        if (action.equals("status")) {
+            res.put("version", Updater.currentVersionName(act));
+            res.put("versionCode", Updater.currentVersionCode(act));
+            res.put("tv", new JSONObject(act.tvStatus()));
+            res.put("historyCount", new org.json.JSONArray(Store.getHistory(act)).length());
+        } else if (action.equals("update-check")) {
+            try {
+                res.put("update", Updater.check(act));
+            } catch (Exception e) {
+                res.put("ok", false);
+                res.put("error", String.valueOf(e.getMessage()));
+            }
+        } else if (action.equals("update-install")) {
+            act.js("window.kt && kt.remoteInstall()");
+        } else if (action.equals("clear-history")) {
+            Store.clearHistory(act);
+            act.js("window.kt && kt.onRemoteAction('history')");
+        } else if (action.equals("clear-cache")) {
+            act.js("window.kt && kt.onRemoteAction('cache')");
+        } else {
+            res.put("ok", false);
+            res.put("error", "Unknown action");
+        }
+        return res;
     }
 
     /** Returns null when the PIN is accepted, otherwise a message for the parent. */

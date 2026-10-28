@@ -41,8 +41,13 @@
   .mini { width: auto; padding: 5px 10px; font-size: 12px; border-radius: 8px; background: var(--line); color: var(--text); font-weight: 600; }
   .mini.done { background: var(--ok); color: #fff; }
   .tabs { display: flex; gap: 8px; margin-bottom: 14px; }
-  .tab { background: var(--card); color: var(--text); border: 1px solid var(--line); }
+  .tab { background: var(--card); color: var(--text); border: 1px solid var(--line); width: auto; flex: 1 1 0; min-width: 0; padding: 10px 6px; font-size: 14px; line-height: 1.2; }
+  html, body { overflow-x: hidden; }
   .tab.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .kv { display: flex; justify-content: space-between; padding: 8px 0; border-top: 1px solid var(--line); }
+  .kv:first-of-type { border-top: 0; }
+  .kv span { color: var(--muted); }
+  button.secondary { background: var(--line); color: var(--text); }
   .lang { display: flex; gap: 6px; float: right; margin-top: 10px; }
   .lang button { width: auto; padding: 6px 10px; font-size: 13px; background: var(--card); color: var(--text); border: 1px solid var(--line); }
   .lang button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
@@ -67,6 +72,33 @@
   <div class="tabs hidden" id="tabs">
     <button class="tab on" data-tab="form" data-i="tabSettings"></button>
     <button class="tab" data-tab="history" data-i="tabHistory"></button>
+    <button class="tab" data-tab="app" data-i="tabApp"></button>
+  </div>
+
+  <!-- App: version, updates, maintenance -->
+  <div id="app" class="hidden">
+    <div class="card">
+      <h2 data-i="appTitle"></h2>
+      <div class="kv"><span data-i="version"></span><b id="appVersion">—</b></div>
+      <div class="kv"><span data-i="quota"></span><b id="appQuota">—</b></div>
+      <div class="kv"><span data-i="histCount"></span><b id="appHist">—</b></div>
+    </div>
+    <div class="card">
+      <h2 data-i="updates"></h2>
+      <div class="hint" id="updText" data-i="updHint"></div>
+      <div style="height:10px"></div>
+      <button id="updCheck" data-i="checkUpd"></button>
+      <div style="height:8px"></div>
+      <button id="updInstall" class="hidden" data-i="installUpd"></button>
+    </div>
+    <div class="card">
+      <h2 data-i="maintenance"></h2>
+      <button id="clrHistory" class="secondary" data-i="clearHistory"></button>
+      <div class="hint" data-i="clearHistoryHint"></div>
+      <div style="height:12px"></div>
+      <button id="clrCache" class="secondary" data-i="clearCache"></button>
+      <div class="hint" data-i="clearCacheHint"></div>
+    </div>
   </div>
 
   <!-- History -->
@@ -141,7 +173,14 @@
   var STR = {
     en: {
       sub: 'Parental controls for the TV', login: 'Sign in', parentPin: 'Parent PIN', loginPh: 'Leave empty if no PIN is set yet', signIn: 'Sign in',
-      tabSettings: 'Settings', tabHistory: 'Watch history',
+      tabSettings: 'Settings', tabHistory: 'Watch history', tabApp: 'App',
+      appTitle: 'KidsTube on the TV', version: 'Version', quota: 'API quota used today', histCount: 'Videos in the history',
+      updates: 'Updates', updHint: 'Check GitHub for a new version.', checkUpd: 'Check for updates', installUpd: 'Install on the TV',
+      updChecking: 'Checking…', updAvailable: 'New version available: {0}. Installed: {1}.', updLatest: 'You have the latest version ({0}).',
+      updStarted: 'Download started on the TV. Confirm the installation on the TV screen with the remote.',
+      maintenance: 'Maintenance', clearHistory: 'Clear watch history', clearHistoryHint: 'Removes “Watched”, “Watch again” and the history on this page.',
+      clearCache: 'Clear cache', clearCacheHint: 'Search results and channel lists will be loaded again.',
+      confirmHistory: 'Clear the whole watch history?', done: 'Done ✓',
       histTitle: 'What your child watched', histHint: 'You can block a video or channel right here — then press “Save”.',
       loading: 'Loading…', histEmpty: 'Nothing watched yet.', histFail: 'Could not load the history.',
       watchedTimes: 'watched {0} times', blockVideo: '🚫 Video', blockChannel: '🚫 Channel', videoListed: '✓ Video listed', channelListed: '✓ Channel listed', open: 'Open',
@@ -162,7 +201,14 @@
     },
     ru: {
       sub: 'Настройки родительского контроля на телевизоре', login: 'Вход', parentPin: 'PIN родителя', loginPh: 'Если PIN ещё не задан — оставьте пустым', signIn: 'Войти',
-      tabSettings: 'Настройки', tabHistory: 'История просмотров',
+      tabSettings: 'Настройки', tabHistory: 'История просмотров', tabApp: 'Приложение',
+      appTitle: 'KidsTube на телевизоре', version: 'Версия', quota: 'Квота API за сегодня', histCount: 'Видео в истории',
+      updates: 'Обновления', updHint: 'Проверить новую версию на GitHub.', checkUpd: 'Проверить обновления', installUpd: 'Установить на телевизор',
+      updChecking: 'Проверяю…', updAvailable: 'Доступна новая версия: {0}. Сейчас установлена {1}.', updLatest: 'Установлена последняя версия ({0}).',
+      updStarted: 'Загрузка началась на телевизоре. Подтвердите установку на экране ТВ пультом.',
+      maintenance: 'Обслуживание', clearHistory: 'Очистить историю просмотров', clearHistoryHint: 'Удалит «Я смотрел», «Смотреть снова» и историю на этой странице.',
+      clearCache: 'Очистить кэш', clearCacheHint: 'Результаты поиска и списки каналов загрузятся заново.',
+      confirmHistory: 'Очистить всю историю просмотров?', done: 'Готово ✓',
       histTitle: 'Что смотрел ребёнок', histHint: 'Можно сразу заблокировать видео или канал — затем нажмите «Сохранить».',
       loading: 'Загрузка…', histEmpty: 'Пока ничего не смотрели.', histFail: 'Не удалось загрузить историю.',
       watchedTimes: 'смотрел {0} раз', blockVideo: '🚫 Видео', blockChannel: '🚫 Канал', videoListed: '✓ Видео в списке', channelListed: '✓ Канал в списке', open: 'Открыть',
@@ -183,7 +229,7 @@
     }
   };
   var lang = /^ru/i.test(navigator.language || '') ? 'ru' : 'en';
-  function t(k, a) { var v = (STR[lang][k] || STR.en[k] || k); return a === undefined ? v : v.replace('{0}', a); }
+  function t(k, a, b) { var v = (STR[lang][k] || STR.en[k] || k); return v.replace('{0}', a === undefined ? '' : a).replace('{1}', b === undefined ? '' : b); }
   function applyLang(l) {
     lang = STR[l] ? l : 'en';
     document.documentElement.lang = lang;
@@ -248,7 +294,10 @@
       var tab = tb.getAttribute('data-tab');
       $('form').classList.toggle('hidden', tab !== 'form');
       $('history').classList.toggle('hidden', tab !== 'history');
+      $('app').classList.toggle('hidden', tab !== 'app');
+      $('bar').classList.toggle('hidden', tab === 'app');
       if (tab === 'history') loadHistory();
+      if (tab === 'app') loadStatus();
     };
   });
 
@@ -295,6 +344,46 @@
       });
     }).catch(function () { box.innerHTML = ''; box.appendChild(hint(t('histFail'))); });
   }
+
+  // ---- App tab ----
+  var upd = null;
+  function loadStatus() {
+    post('/api/app/status', { pin: pin }).then(function (r) {
+      if (!r.ok) { msg(r.error || t('error')); return; }
+      $('appVersion').textContent = r.version + ' (' + r.versionCode + ')';
+      $('appQuota').textContent = (r.tv && r.tv.quotaUsed != null ? '~' + r.tv.quotaUsed : '0') + ' / 10 000';
+      $('appHist').textContent = r.historyCount;
+    }).catch(function () { msg(t('noTv')); });
+  }
+  $('updCheck').onclick = function () {
+    $('updText').textContent = t('updChecking');
+    $('updInstall').classList.add('hidden');
+    post('/api/app/update-check', { pin: pin }).then(function (r) {
+      if (!r.ok) { $('updText').textContent = r.error || t('error'); return; }
+      upd = r.update;
+      if (upd.available) {
+        $('updText').textContent = t('updAvailable', upd.latestName || upd.latestCode, upd.currentName);
+        $('updInstall').classList.remove('hidden');
+      } else $('updText').textContent = t('updLatest', upd.currentName);
+    }).catch(function () { msg(t('noTv')); });
+  };
+  $('updInstall').onclick = function () {
+    post('/api/app/update-install', { pin: pin }).then(function (r) {
+      $('updText').textContent = r.ok ? t('updStarted') : (r.error || t('error'));
+      $('updInstall').classList.add('hidden');
+    }).catch(function () { msg(t('noTv')); });
+  };
+  $('clrHistory').onclick = function () {
+    if (!confirm(t('confirmHistory'))) return;
+    post('/api/app/clear-history', { pin: pin }).then(function (r) {
+      msg(r.ok ? t('done') : (r.error || t('error')), r.ok);
+      loadStatus();
+    }).catch(function () { msg(t('noTv')); });
+  };
+  $('clrCache').onclick = function () {
+    post('/api/app/clear-cache', { pin: pin }).then(function (r) { msg(r.ok ? t('done') : (r.error || t('error')), r.ok); })
+      .catch(function () { msg(t('noTv')); });
+  };
 
   $('saveBtn').onclick = function () {
     var s = {};

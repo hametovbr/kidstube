@@ -224,6 +224,13 @@ public class MainActivity extends Activity {
         });
     }
 
+    /** Small status report from the UI (quota used today, update state) shown on the phone page. */
+    private volatile String tvStatus = "{}";
+
+    String tvStatus() {
+        return tvStatus;
+    }
+
     void onSettingsChangedRemotely() {
         js("window.kt && kt.onSettingsChanged()");
     }
@@ -366,6 +373,15 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void clearHistory() {
             Store.clearHistory(MainActivity.this);
+        }
+
+        @JavascriptInterface
+        public void reportStatus(String json) {
+            try {
+                new JSONObject(json);
+                tvStatus = json;
+            } catch (Exception ignored) {
+            }
         }
 
         @JavascriptInterface

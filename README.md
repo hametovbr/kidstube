@@ -41,9 +41,9 @@ The interface is available in **English** (default) and **Russian** — switch i
 </tr>
 </table>
 
-<p><img src="docs/screenshots/phone-settings.png" width="280" alt="Phone: settings"> <img src="docs/screenshots/phone-history.png" width="280" alt="Phone: watch history with one-tap blocking"></p>
+<p><img src="docs/screenshots/phone-settings.png" width="260" alt="Phone: settings"> <img src="docs/screenshots/phone-history.png" width="260" alt="Phone: watch history with one-tap blocking"> <img src="docs/screenshots/phone-app.png" width="260" alt="Phone: version, updates and maintenance"></p>
 
-<sub>Phone: settings · Phone: watch history with one-tap blocking</sub>
+<sub>Phone: settings · Phone: watch history with one-tap blocking · Phone: version, updates and maintenance</sub>
 
 ## What the child sees
 
@@ -84,7 +84,11 @@ On first launch the TV shows an address like `http://192.168.1.23:8765` and a QR
 - the **parent PIN** (4–8 digits) — it protects the settings and the parent menu on the TV;
 - blocked words and channels, subscriptions for the home screen, the TV language.
 
-You can change the settings from the phone at any time while KidsTube is open on the TV; they apply immediately.
+You can change the settings from the phone at any time while KidsTube is open on the TV; they apply immediately. **Everything available in the TV settings is also on the phone page**, in three tabs:
+
+- **Settings** — every option: language, API key, PIN, blocked words/channels/videos, where to look for words, filters, subscriptions and collections, autoplay;
+- **Watch history** — what was watched, with one-tap blocking;
+- **App** — version, quota used today, check for updates and install them on the TV (confirm on the TV screen), clear the watch history or the cache.
 
 ### YouTube Data API key
 

@@ -201,6 +201,13 @@
       o.used += units;
       localStorage.setItem('quota', JSON.stringify(o));
     } catch (e) {}
+    reportStatus();
+  }
+
+  /** Tells the native side what the phone settings page should show (quota used today). */
+  function reportStatus() {
+    if (typeof Native.reportStatus !== 'function') return;
+    try { Native.reportStatus(JSON.stringify({ quotaUsed: quotaUsed(), lang: S.lang })); } catch (e) {}
   }
   function quotaUsed() {
     try { var o = JSON.parse(localStorage.getItem('quota') || '{}'); return o.day === quotaDay() ? o.used : 0; }
@@ -1718,6 +1725,20 @@
       delete nativeCalls[id];
       if (cb) cb(ok, data);
     },
+    /** The parent pressed "Install update" on the phone. */
+    remoteInstall: function () {
+      toast(t('upd.checking'));
+      nativeAsync('checkUpdate').then(function (r) {
+        Upd.info = r;
+        renderUpdate();
+        if (r.available) { toast(t('upd.downloading')); installUpdate(); }
+        else toast(t('upd.latest', r.currentName));
+      }, function (e) { toast(t('upd.checkFail', e.message)); });
+    },
+    onRemoteAction: function (what) {
+      if (what === 'cache') { pruneCache(true); toast(t('toast.cacheCleared')); }
+      if (what === 'history') { toast(t('toast.historyCleared')); refreshVisible(); if (Screens.top() === Library) renderLibrary(false); }
+    },
     onUpdateProgress: function (p) { if (Upd.busy) updInfo(t('upd.progress', p)); },
     onUpdateError: function (msg) { Upd.busy = false; updInfo(msg); toast(msg); },
     onVoiceError: function () { toast(t('toast.noVoice')); },
@@ -1757,4 +1778,5 @@
   loadSettings();
   goHome();
   autoCheckUpdates();
+  reportStatus();
 })();
