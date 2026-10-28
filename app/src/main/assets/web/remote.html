@@ -40,10 +40,16 @@
   .hist .acts { display: flex; gap: 6px; flex-wrap: wrap; }
   .mini { width: auto; padding: 5px 10px; font-size: 12px; border-radius: 8px; background: var(--line); color: var(--text); font-weight: 600; }
   .mini.done { background: var(--ok); color: #fff; }
-  .tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+  .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+  @media (max-width: 460px) { .tabs { grid-template-columns: repeat(2, 1fr); } }
   .tab { background: var(--card); color: var(--text); border: 1px solid var(--line); width: auto; flex: 1 1 0; min-width: 0; padding: 10px 6px; font-size: 14px; line-height: 1.2; }
   html, body { overflow-x: hidden; }
   .tab.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .srch { padding: 10px 0; border-top: 1px solid var(--line); }
+  .srch:first-child { border-top: 0; }
+  .srch .q { font-weight: 700; font-size: 15px; word-break: break-word; }
+  .srch .m { color: var(--muted); font-size: 12px; margin: 2px 0 6px; }
+  .srch .bad { color: #d6453d; font-weight: 600; }
   .kv { display: flex; justify-content: space-between; padding: 8px 0; border-top: 1px solid var(--line); }
   .kv:first-of-type { border-top: 0; }
   .kv span { color: var(--muted); }
@@ -72,7 +78,18 @@
   <div class="tabs hidden" id="tabs">
     <button class="tab on" data-tab="form" data-i="tabSettings"></button>
     <button class="tab" data-tab="history" data-i="tabHistory"></button>
+    <button class="tab" data-tab="searches" data-i="tabSearches"></button>
     <button class="tab" data-tab="app" data-i="tabApp"></button>
+  </div>
+
+  <!-- Search log -->
+  <div id="searches" class="hidden">
+    <div class="card">
+      <h2 data-i="searchTitle"></h2>
+      <div class="hint" style="margin:-6px 0 8px" data-i="searchHint"></div>
+      <label class="check" style="border:0;padding:4px 0"><input type="checkbox" id="onlyBlocked"> <span data-i="onlyBlocked"></span></label>
+      <div id="searchList"></div>
+    </div>
   </div>
 
   <!-- App: version, updates, maintenance -->
@@ -82,6 +99,7 @@
       <div class="kv"><span data-i="version"></span><b id="appVersion">—</b></div>
       <div class="kv"><span data-i="quota"></span><b id="appQuota">—</b></div>
       <div class="kv"><span data-i="histCount"></span><b id="appHist">—</b></div>
+      <div class="kv"><span data-i="searchCount"></span><b id="appSearches">—</b></div>
     </div>
     <div class="card">
       <h2 data-i="updates"></h2>
@@ -92,12 +110,24 @@
       <button id="updInstall" class="hidden" data-i="installUpd"></button>
     </div>
     <div class="card">
+      <h2 data-i="backupTitle"></h2>
+      <div class="hint" data-i="backupHint"></div>
+      <div style="height:10px"></div>
+      <button id="backupBtn" data-i="backupDownload"></button>
+      <div style="height:12px"></div>
+      <label class="check" style="border:0;padding:4px 0"><input type="checkbox" id="restoreHistory" checked> <span data-i="restoreWithHistory"></span></label>
+      <button id="restoreBtn" class="secondary" data-i="restoreBtn"></button>
+      <input type="file" id="restoreFile" accept="application/json,.json" class="hidden">
+    </div>
+    <div class="card">
       <h2 data-i="maintenance"></h2>
       <button id="clrHistory" class="secondary" data-i="clearHistory"></button>
       <div class="hint" data-i="clearHistoryHint"></div>
       <div style="height:12px"></div>
       <button id="clrCache" class="secondary" data-i="clearCache"></button>
       <div class="hint" data-i="clearCacheHint"></div>
+      <div style="height:12px"></div>
+      <button id="clrSearches" class="secondary" data-i="clearSearches"></button>
     </div>
   </div>
 
@@ -178,7 +208,14 @@
   var STR = {
     en: {
       sub: 'Parental controls for the TV', login: 'Sign in', parentPin: 'Parent PIN', loginPh: 'Leave empty if no PIN is set yet', signIn: 'Sign in',
-      tabSettings: 'Settings', tabHistory: 'Watch history', tabApp: 'App',
+      tabSettings: 'Settings', tabHistory: 'Watched', tabSearches: 'Searches', tabApp: 'App',
+      searchTitle: 'What your child searched for', searchHint: 'Blocked searches are shown in red. Add a word to the blocked list with one tap — then press “Save”.',
+      onlyBlocked: 'Only blocked searches', srcVoice: '🎤 voice', srcText: '⌨️ typed', srcChip: '💡 idea', blockedSearch: '🚫 blocked by the filter',
+      foundHidden: 'found {0}, hidden by the filter {1}', searchError: 'search error', addWord: '🚫 Block this word', wordAdded: '✓ Added to blocked words',
+      searchesEmpty: 'No searches yet.', searchCount: 'Searches in the log', clearSearches: 'Clear the search log', confirmSearches: 'Clear the whole search log?',
+      backupTitle: 'Backup', backupHint: 'A file with all settings (including the API key and PIN), the watch history and the search log. Keep it private.',
+      backupDownload: 'Download a backup', restoreWithHistory: 'Also restore the watch history and search log', restoreBtn: 'Restore from a file…',
+      confirmRestore: 'Replace the current settings with the ones from the backup?', restored: 'Restored ✓ The PIN is now the one from the backup.', badFile: 'This file is not a KidsTube backup.',
       appTitle: 'KidsTube on the TV', version: 'Version', quota: 'API quota used today', histCount: 'Videos in the history',
       updates: 'Updates', updHint: 'Check GitHub for a new version.', checkUpd: 'Check for updates', installUpd: 'Install on the TV',
       updChecking: 'Checking…', updAvailable: 'New version available: {0}. Installed: {1}.', updLatest: 'You have the latest version ({0}).',
@@ -206,7 +243,14 @@
     },
     ru: {
       sub: 'Настройки родительского контроля на телевизоре', login: 'Вход', parentPin: 'PIN родителя', loginPh: 'Если PIN ещё не задан — оставьте пустым', signIn: 'Войти',
-      tabSettings: 'Настройки', tabHistory: 'История просмотров', tabApp: 'Приложение',
+      tabSettings: 'Настройки', tabHistory: 'Просмотры', tabSearches: 'Поиски', tabApp: 'Приложение',
+      searchTitle: 'Что ребёнок искал', searchHint: 'Заблокированные поиски выделены красным. Слово можно сразу добавить в запрещённые — затем нажмите «Сохранить».',
+      onlyBlocked: 'Только заблокированные', srcVoice: '🎤 голосом', srcText: '⌨️ текстом', srcChip: '💡 подсказка', blockedSearch: '🚫 заблокирован фильтром',
+      foundHidden: 'найдено {0}, скрыто фильтром {1}', searchError: 'ошибка поиска', addWord: '🚫 Запретить слово', wordAdded: '✓ Добавлено в запрещённые',
+      searchesEmpty: 'Пока ничего не искали.', searchCount: 'Поисков в журнале', clearSearches: 'Очистить журнал поисков', confirmSearches: 'Очистить весь журнал поисков?',
+      backupTitle: 'Резервная копия', backupHint: 'Файл со всеми настройками (включая ключ API и PIN), историей просмотров и журналом поисков. Никому его не отправляйте.',
+      backupDownload: 'Скачать резервную копию', restoreWithHistory: 'Восстановить также историю просмотров и журнал поисков', restoreBtn: 'Восстановить из файла…',
+      confirmRestore: 'Заменить текущие настройки настройками из копии?', restored: 'Восстановлено ✓ PIN теперь как в копии.', badFile: 'Это не файл резервной копии KidsTube.',
       appTitle: 'KidsTube на телевизоре', version: 'Версия', quota: 'Квота API за сегодня', histCount: 'Видео в истории',
       updates: 'Обновления', updHint: 'Проверить новую версию на GitHub.', checkUpd: 'Проверить обновления', installUpd: 'Установить на телевизор',
       updChecking: 'Проверяю…', updAvailable: 'Доступна новая версия: {0}. Сейчас установлена {1}.', updLatest: 'Установлена последняя версия ({0}).',
@@ -302,9 +346,11 @@
       $('form').classList.toggle('hidden', tab !== 'form');
       $('history').classList.toggle('hidden', tab !== 'history');
       $('app').classList.toggle('hidden', tab !== 'app');
+      $('searches').classList.toggle('hidden', tab !== 'searches');
       $('bar').classList.toggle('hidden', tab === 'app');
       if (tab === 'history') loadHistory();
       if (tab === 'app') loadStatus();
+      if (tab === 'searches') loadSearches();
     };
   });
 
@@ -360,6 +406,7 @@
       $('appVersion').textContent = r.version + ' (' + r.versionCode + ')';
       $('appQuota').textContent = (r.tv && r.tv.quotaUsed != null ? '~' + r.tv.quotaUsed : '0') + ' / 10 000';
       $('appHist').textContent = r.historyCount;
+      $('appSearches').textContent = r.searchCount;
     }).catch(function () { msg(t('noTv')); });
   }
   $('updCheck').onclick = function () {
@@ -387,6 +434,92 @@
       loadStatus();
     }).catch(function () { msg(t('noTv')); });
   };
+  // ---- Search log ----
+  var searchCache = [];
+  function loadSearches() {
+    var box = $('searchList');
+    box.innerHTML = '';
+    box.appendChild(hint(t('loading')));
+    post('/api/searches', { pin: pin }).then(function (r) {
+      searchCache = (r && r.searches) || [];
+      renderSearches();
+    }).catch(function () { box.innerHTML = ''; box.appendChild(hint(t('noTv'))); });
+  }
+  function renderSearches() {
+    var box = $('searchList');
+    box.innerHTML = '';
+    var list = searchCache.filter(function (e) { return !$('onlyBlocked').checked || e.blocked; });
+    if (!list.length) { box.appendChild(hint(t('searchesEmpty'))); return; }
+    var blocked = lines($('blockedWords').value).map(function (w) { return w.toLowerCase(); });
+    list.slice(0, 200).forEach(function (e) {
+      var row = document.createElement('div'); row.className = 'srch';
+      var q = document.createElement('div'); q.className = 'q'; q.textContent = e.q; row.appendChild(q);
+      var m = document.createElement('div'); m.className = 'm';
+      var src = e.source === 'voice' ? t('srcVoice') : e.source === 'chip' ? t('srcChip') : t('srcText');
+      m.appendChild(document.createTextNode(fmtDate(e.at) + ' · ' + src + ' · '));
+      var st = document.createElement('span');
+      if (e.blocked) { st.className = 'bad'; st.textContent = t('blockedSearch'); }
+      else if (e.error) st.textContent = t('searchError');
+      else st.textContent = t('foundHidden', e.found, (e.found || 0) - (e.shown || 0));
+      m.appendChild(st);
+      row.appendChild(m);
+      if (!e.blocked) {
+        var already = blocked.indexOf(String(e.q).toLowerCase()) >= 0;
+        var b = document.createElement('button'); b.className = 'mini' + (already ? ' done' : '');
+        b.textContent = already ? t('wordAdded') : t('addWord');
+        b.onclick = function () { appendLine('blockedWords', e.q); b.classList.add('done'); b.textContent = t('wordAdded'); };
+        row.appendChild(b);
+      }
+      box.appendChild(row);
+    });
+  }
+  $('onlyBlocked').onchange = renderSearches;
+  $('clrSearches').onclick = function () {
+    if (!confirm(t('confirmSearches'))) return;
+    post('/api/app/clear-searches', { pin: pin }).then(function (r) {
+      msg(r.ok ? t('done') : (r.error || t('error')), r.ok);
+      loadStatus();
+    }).catch(function () { msg(t('noTv')); });
+  };
+
+  // ---- Backup & restore ----
+  $('backupBtn').onclick = function () {
+    post('/api/backup', { pin: pin }).then(function (r) {
+      if (!r.ok) { msg(r.error || t('error')); return; }
+      var d = new Date(), p2 = function (n) { return (n < 10 ? '0' : '') + n; };
+      var name = 'kidstube-backup-' + d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()) + '.json';
+      var blob = new Blob([JSON.stringify(r.backup, null, 2)], { type: 'application/json' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+      msg(t('done'), true);
+    }).catch(function () { msg(t('noTv')); });
+  };
+  $('restoreBtn').onclick = function () { $('restoreFile').value = ''; $('restoreFile').click(); };
+  $('restoreFile').onchange = function () {
+    var f = $('restoreFile').files[0];
+    if (!f) return;
+    var rd = new FileReader();
+    rd.onload = function () {
+      var backup;
+      try { backup = JSON.parse(rd.result); } catch (e) { backup = null; }
+      if (!backup || backup.app !== 'kidstube' || !backup.settings) { msg(t('badFile')); return; }
+      if (!confirm(t('confirmRestore'))) return;
+      post('/api/restore', { pin: pin, backup: backup, withHistory: $('restoreHistory').checked }).then(function (r) {
+        if (!r.ok) { msg(r.error || t('error')); return; }
+        pin = backup.settings.pin;
+        fill(backup.settings);
+        if (backup.settings.lang) applyLang(backup.settings.lang);
+        msg(t('restored'), true);
+        loadStatus();
+      }).catch(function () { msg(t('noTv')); });
+    };
+    rd.readAsText(f);
+  };
+
   $('clrCache').onclick = function () {
     post('/api/app/clear-cache', { pin: pin }).then(function (r) { msg(r.ok ? t('done') : (r.error || t('error')), r.ok); })
       .catch(function () { msg(t('noTv')); });

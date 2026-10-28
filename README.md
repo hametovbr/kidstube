@@ -41,9 +41,9 @@ The interface is available in **English** (default) and **Russian**, and in two 
 </tr>
 </table>
 
-<p><img src="docs/screenshots/phone-settings.png" width="260" alt="Phone: settings"> <img src="docs/screenshots/phone-history.png" width="260" alt="Phone: watch history with one-tap blocking"> <img src="docs/screenshots/phone-app.png" width="260" alt="Phone: version, updates and maintenance"></p>
+<p><img src="docs/screenshots/phone-settings.png" width="260" alt="Phone: settings"> <img src="docs/screenshots/phone-history.png" width="260" alt="Phone: watch history with one-tap blocking"> <img src="docs/screenshots/phone-searches.png" width="260" alt="Phone: search log"> <img src="docs/screenshots/phone-app.png" width="260" alt="Phone: version, updates and maintenance"></p>
 
-<sub>Phone: settings · Phone: watch history with one-tap blocking · Phone: version, updates and maintenance</sub>
+<sub>Phone: settings · Phone: watch history with one-tap blocking · Phone: search log · Phone: version, updates and maintenance</sub>
 
 ### Interface styles
 
@@ -101,11 +101,12 @@ On first launch the TV shows an address like `http://192.168.1.23:8765` and a QR
 - the **parent PIN** (4–8 digits) — it protects the settings and the parent menu on the TV;
 - blocked words and channels, subscriptions for the home screen, the TV language.
 
-You can change the settings from the phone at any time while KidsTube is open on the TV; they apply immediately. **Everything available in the TV settings is also on the phone page**, in three tabs:
+You can change the settings from the phone at any time while KidsTube is open on the TV; they apply immediately. **Everything available in the TV settings is also on the phone page**, in four tabs:
 
-- **Settings** — every option: language, API key, PIN, blocked words/channels/videos, where to look for words, filters, subscriptions and collections, autoplay;
-- **Watch history** — what was watched, with one-tap blocking;
-- **App** — version, quota used today, check for updates and install them on the TV (confirm on the TV screen), clear the watch history or the cache.
+- **Settings** — every option: language, interface style, API key, PIN, blocked words/channels/videos, where to look for words, filters, subscriptions and collections, autoplay;
+- **Watched** — what was watched, with one-tap blocking of a video or channel;
+- **Searches** — everything the child searched for (by voice, typed or via an idea chip), with how many results the filter hid; blocked searches are highlighted, and any query can be added to the blocked words with one tap;
+- **App** — version, quota used today, updates (installed on the TV after confirming on its screen), **backup and restore** (one JSON file with all settings, the watch history and the search log — it contains the API key and PIN, so keep it private), clearing the history, the search log or the cache.
 
 ### YouTube Data API key
 

@@ -957,18 +957,35 @@
     openSection('search', q);
   }
 
+  // How the next search was started — for the parent's search log.
+  var searchSource = 'text';
+
+  function logSearch(entry) {
+    if (typeof Native.logSearch !== 'function') return;
+    try { Native.logSearch(JSON.stringify(entry)); } catch (e) {}
+  }
+
   function runSearch(q) {
     q = String(q || '').trim();
+    var source = searchSource;
+    searchSource = 'text';
     if (!q) return;
     R = { q: q, items: [], next: null, loading: true, error: null };
     $('resultsSearch').value = q;
     rememberQuery(q);
     renderResults(true);
-    if (queryBlocked(q)) { R.loading = false; renderResults(true); return; }
+    if (queryBlocked(q)) {
+      logSearch({ q: q, source: source, blocked: true, found: 0, shown: 0 });
+      R.loading = false; renderResults(true); return;
+    }
     searchVideos(q).then(function (res) {
+      logSearch({ q: q, source: source, blocked: false, found: res.items.length, shown: allowed(res.items).length });
       if (R.q !== q) return;
       R.items = res.items; R.next = res.next;
-    }, function (e) { R.error = apiErrorText(e); }).then(function () {
+    }, function (e) {
+      logSearch({ q: q, source: source, blocked: false, error: true, found: 0, shown: 0 });
+      R.error = apiErrorText(e);
+    }).then(function () {
       if (R.q !== q) return;
       R.loading = false;
       renderResults(true);
@@ -1620,6 +1637,7 @@
     if (!q) return;
     inp.blur();
     Native.hideKeyboard();
+    searchSource = 'text';
     openSearch(q);
   }
 
@@ -1645,7 +1663,7 @@
     var section = el.getAttribute && el.getAttribute('data-section');
     if (section) { openSection(section); return; }
     if (el._section) { openSection(el._section); return; }
-    if (el._query) { runSearch(el._query); return; }
+    if (el._query) { searchSource = 'chip'; runSearch(el._query); return; }
     if (el._video) {
       if (Screens.top() === Player) { closeRelated(); P.list = el._list; P.index = el._index; startVideo(); }
       else play(el._list, el._index);
@@ -1722,6 +1740,7 @@
       if (!text) return;
       var top = Screens.top();
       if (top === Player || top.dialog) return;
+      searchSource = 'voice';
       openSearch(text);
     },
     onNative: function (id, ok, data) {

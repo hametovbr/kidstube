@@ -371,6 +371,11 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public void logSearch(String entryJson) {
+            Store.addSearch(MainActivity.this, entryJson);
+        }
+
+        @JavascriptInterface
         public void clearHistory() {
             Store.clearHistory(MainActivity.this);
         }

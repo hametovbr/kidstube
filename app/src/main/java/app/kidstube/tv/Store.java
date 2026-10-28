@@ -93,6 +93,60 @@ final class Store {
         historyFile(c).delete();
     }
 
+    /** Replaces the whole history (restore from a backup). */
+    static synchronized void setHistory(Context c, JSONArray list) throws Exception {
+        write(historyFile(c), list.toString());
+    }
+
+    // ---- Search log: what the child searched for, newest first ----
+
+    private static final int SEARCHES_MAX = 300;
+
+    static synchronized String getSearches(Context c) {
+        try {
+            File f = searchesFile(c);
+            if (!f.exists()) return "[]";
+            FileInputStream in = new FileInputStream(f);
+            ByteArrayOutputStream buf = new ByteArrayOutputStream();
+            byte[] b = new byte[8192];
+            int n;
+            while ((n = in.read(b)) > 0) buf.write(b, 0, n);
+            in.close();
+            String s = buf.toString("UTF-8");
+            new JSONArray(s);
+            return s;
+        } catch (Exception e) {
+            return "[]";
+        }
+    }
+
+    /** Adds {q, source, blocked, found, shown}; the time is added here. */
+    static synchronized void addSearch(Context c, String entryJson) {
+        try {
+            JSONObject e = new JSONObject(entryJson);
+            if (e.optString("q", "").trim().isEmpty()) return;
+            e.put("at", System.currentTimeMillis());
+            JSONArray old = new JSONArray(getSearches(c));
+            JSONArray out = new JSONArray();
+            out.put(e);
+            for (int i = 0; i < old.length() && out.length() < SEARCHES_MAX; i++) out.put(old.get(i));
+            write(searchesFile(c), out.toString());
+        } catch (Exception ignored) {
+        }
+    }
+
+    static synchronized void setSearches(Context c, JSONArray list) throws Exception {
+        write(searchesFile(c), list.toString());
+    }
+
+    static synchronized void clearSearches(Context c) {
+        searchesFile(c).delete();
+    }
+
+    private static File searchesFile(Context c) {
+        return new File(c.getApplicationContext().getFilesDir(), "searches.json");
+    }
+
     private static File historyFile(Context c) {
         return new File(c.getApplicationContext().getFilesDir(), "history.json");
     }

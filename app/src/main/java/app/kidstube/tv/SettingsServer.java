@@ -22,7 +22,7 @@ import java.util.Locale;
  */
 final class SettingsServer implements Runnable {
     private static final int FIRST_PORT = 8765;
-    private static final int MAX_BODY = 256 * 1024;
+    private static final int MAX_BODY = 4 * 1024 * 1024;
 
     private final MainActivity act;
     private volatile ServerSocket socket;
@@ -146,6 +146,60 @@ final class SettingsServer implements Runnable {
                     send(out, 200, "application/json; charset=utf-8",
                             "{\"ok\":true,\"history\":" + Store.getHistory(act) + "}");
                 }
+            } else if (method.equals("POST") && path.equals("/api/searches")) {
+                JSONObject req = new JSONObject(bodyText);
+                String err = checkPin(req.optString("pin", ""));
+                if (err != null) {
+                    sendJson(out, 403, error(err));
+                } else {
+                    send(out, 200, "application/json; charset=utf-8",
+                            "{\"ok\":true,\"searches\":" + Store.getSearches(act) + "}");
+                }
+            } else if (method.equals("POST") && path.equals("/api/backup")) {
+                // Everything needed to restore the app: settings, watch history, search log.
+                JSONObject req = new JSONObject(bodyText);
+                String err = checkPin(req.optString("pin", ""));
+                if (err != null) {
+                    sendJson(out, 403, error(err));
+                } else {
+                    JSONObject b = new JSONObject();
+                    b.put("app", "kidstube");
+                    b.put("format", 1);
+                    b.put("createdAt", System.currentTimeMillis());
+                    b.put("appVersion", Updater.currentVersionName(act));
+                    b.put("settings", new JSONObject(Store.get(act)));
+                    b.put("history", new org.json.JSONArray(Store.getHistory(act)));
+                    b.put("searches", new org.json.JSONArray(Store.getSearches(act)));
+                    JSONObject res = new JSONObject();
+                    res.put("ok", true);
+                    res.put("backup", b);
+                    sendJson(out, 200, res);
+                }
+            } else if (method.equals("POST") && path.equals("/api/restore")) {
+                JSONObject req = new JSONObject(bodyText);
+                String err = checkPin(req.optString("pin", ""));
+                JSONObject b = req.optJSONObject("backup");
+                JSONObject settings = b == null ? null : b.optJSONObject("settings");
+                if (err != null) {
+                    sendJson(out, 403, error(err));
+                } else if (b == null || !"kidstube".equals(b.optString("app")) || settings == null) {
+                    sendJson(out, 400, error(Store.tr(act, "This is not a KidsTube backup", "Это не резервная копия KidsTube")));
+                } else if (!settings.optString("pin", "").matches("\\d{4,8}")) {
+                    sendJson(out, 400, error(Store.tr(act, "The backup has no valid PIN", "В копии нет корректного PIN")));
+                } else {
+                    Store.save(act, settings.toString());
+                    if (req.optBoolean("withHistory", true)) {
+                        org.json.JSONArray h = b.optJSONArray("history");
+                        if (h != null) Store.setHistory(act, h);
+                        org.json.JSONArray sr = b.optJSONArray("searches");
+                        if (sr != null) Store.setSearches(act, sr);
+                    }
+                    act.onSettingsChangedRemotely();
+                    act.js("window.kt && kt.onRemoteAction('history')");
+                    JSONObject res = new JSONObject();
+                    res.put("ok", true);
+                    sendJson(out, 200, res);
+                }
             } else if (method.equals("POST") && path.startsWith("/api/app/")) {
                 // App actions from the phone: status, updates, clearing history and cache.
                 JSONObject req = new JSONObject(bodyText);
@@ -196,6 +250,7 @@ final class SettingsServer implements Runnable {
             res.put("versionCode", Updater.currentVersionCode(act));
             res.put("tv", new JSONObject(act.tvStatus()));
             res.put("historyCount", new org.json.JSONArray(Store.getHistory(act)).length());
+            res.put("searchCount", new org.json.JSONArray(Store.getSearches(act)).length());
         } else if (action.equals("update-check")) {
             try {
                 res.put("update", Updater.check(act));
@@ -208,6 +263,8 @@ final class SettingsServer implements Runnable {
         } else if (action.equals("clear-history")) {
             Store.clearHistory(act);
             act.js("window.kt && kt.onRemoteAction('history')");
+        } else if (action.equals("clear-searches")) {
+            Store.clearSearches(act);
         } else if (action.equals("clear-cache")) {
             act.js("window.kt && kt.onRemoteAction('cache')");
         } else {
