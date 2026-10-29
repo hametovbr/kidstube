@@ -8,6 +8,11 @@ on:
 permissions:
   contents: write
 
+# Never run two builds at once: they would race to replace the "latest" release.
+concurrency:
+  group: build-and-release
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -34,10 +39,18 @@ jobs:
           echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
           echo "KIDSTUBE_KEYSTORE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
 
+      - name: Read the version
+        run: |
+          NAME=$(grep -E '^VERSION_NAME=' version.properties | cut -d= -f2 | tr -d '[:space:]')
+          IFS=. read -r MA MI PA <<< "$NAME"
+          CODE=$((MA * 10000 + MI * 100 + PA))
+          echo "VERSION_NAME=$NAME" >> "$GITHUB_ENV"
+          echo "VERSION_CODE=$CODE" >> "$GITHUB_ENV"
+          echo "Version $NAME (versionCode $CODE)"
+
       - name: Build
         run: gradle :app:assembleRelease --no-daemon
         env:
-          BUILD_NUMBER: ${{ github.run_number }}
           KIDSTUBE_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
 
       - name: Collect APK
@@ -45,19 +58,25 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: KidsTube
+          name: KidsTube-${{ env.VERSION_NAME }}
           path: KidsTube.apk
 
+      # A release is published only when version.properties was bumped: pushes that keep the
+      # version (docs, refactoring) are built and checked, but don't replace the release.
       - name: Publish as the "latest" release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          CODE=$((100 + ${{ github.run_number }}))
+          PREV=$(gh release view latest --json body --jq .body 2>/dev/null | grep -oE 'versionCode: *[0-9]+' | grep -oE '[0-9]+' || echo 0)
+          if [ "$VERSION_CODE" -le "${PREV:-0}" ]; then
+            echo "::notice::Version $VERSION_NAME ($VERSION_CODE) is not newer than the published release ($PREV) — not publishing. Bump version.properties to release."
+            exit 0
+          fi
           MSG=$(git log -1 --pretty=%s)
           gh release delete latest --yes --cleanup-tag || true
           # The app's updater reads "versionCode: N" from the notes and downloads the .apk asset.
           gh release create latest KidsTube.apk \
-            --title "KidsTube 1.9.${{ github.run_number }}" \
-            --notes "$(printf 'versionCode: %s\n\n%s\n\nBuilt from commit %s' "$CODE" "$MSG" "${{ github.sha }}")" \
+            --title "KidsTube $VERSION_NAME" \
+            --notes "$(printf 'versionCode: %s\n\n%s\n\nBuilt from commit %s' "$VERSION_CODE" "$MSG" "${{ github.sha }}")" \
             --target ${{ github.sha }} \
             --latest

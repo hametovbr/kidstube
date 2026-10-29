@@ -178,7 +178,7 @@ The TV interface follows the Android TV and Fire TV design guidelines:
 
 ## Building
 
-GitHub Actions builds the APK on every push to `main` and publishes it as the `latest` release (the release notes contain `versionCode: N`, which the updater reads). Locally: `gradle :app:assembleRelease` (JDK 17 and Android SDK 34).
+GitHub Actions builds the APK on every push to `main`. A new `latest` release is published only when the version in `version.properties` was raised (the release notes contain `versionCode: N`, which the in-app updater reads); other pushes are just built and checked. Versioning rules are in [AGENTS.md](AGENTS.md#versioning). Locally: `gradle :app:assembleRelease` (JDK 17 and Android SDK 34).
 
 ### Signing key
 

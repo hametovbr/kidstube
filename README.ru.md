@@ -178,7 +178,7 @@ adb shell pm disable-user --user 0 com.google.android.youtube.tvkids
 
 ## Сборка
 
-GitHub Actions собирает APK при каждом пуше в `main` и публикует его в релиз `latest` (в описании релиза есть строка `versionCode: N`, её читает обновлятор). Локально: `gradle :app:assembleRelease` (нужны JDK 17 и Android SDK 34).
+GitHub Actions собирает APK при каждом пуше в `main`. Новый релиз `latest` публикуется только когда версия в `version.properties` повышена (в описании релиза есть строка `versionCode: N`, её читает обновлятор); остальные пуши только собираются и проверяются. Правила версий — в [AGENTS.md](AGENTS.md#versioning). Локально: `gradle :app:assembleRelease` (нужны JDK 17 и Android SDK 34).
 
 ### Ключ подписи
 

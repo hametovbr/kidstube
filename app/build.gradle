@@ -2,7 +2,15 @@ plugins {
     id 'com.android.application'
 }
 
-def buildNumber = (System.getenv('BUILD_NUMBER') ?: '0') as int
+// Version: the only source is version.properties (see AGENTS.md → Versioning).
+def versionProps = new Properties()
+file('../version.properties').withInputStream { versionProps.load(it) }
+def appVersionName = versionProps.getProperty('VERSION_NAME').trim()
+def versionParts = appVersionName.tokenize('.').collect { it as int }
+if (versionParts.size() != 3 || versionParts[1] > 99 || versionParts[2] > 99) {
+    throw new GradleException("VERSION_NAME must be MAJOR.MINOR.PATCH with MINOR and PATCH below 100, got ${appVersionName}")
+}
+def appVersionCode = versionParts[0] * 10000 + versionParts[1] * 100 + versionParts[2]
 
 android {
     namespace 'app.kidstube.tv'
@@ -12,9 +20,8 @@ android {
         applicationId 'app.kidstube.tv'
         minSdk 21
         targetSdk 34
-        // CI builds always get a higher version so they install over older ones.
-        versionCode 100 + buildNumber
-        versionName "1.9.${buildNumber}"
+        versionCode appVersionCode
+        versionName appVersionName
     }
 
     // Release builds are signed with the private key kept in GitHub Actions secrets
