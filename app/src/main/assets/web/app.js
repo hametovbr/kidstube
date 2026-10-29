@@ -1623,8 +1623,29 @@
   // ===================================================================================
   // Keyboard / input helpers
   // ===================================================================================
+  /**
+   * Text entry. On the TV a native dialog with a real text field is used, because the WebView
+   * doesn't reliably bring up the on-screen keyboard; in a browser the input is focused directly.
+   */
   function openKeyboard(inp) {
     if (!inp) return;
+    if (typeof Native.promptText === 'function') {
+      var kind = 'text', title = '';
+      if (inp.id === 'resultsSearch') { kind = 'search'; title = t('search.prompt'); }
+      else if (inp.id === 'pinInput') { kind = 'pin'; title = $('pinTitle').textContent; }
+      else {
+        var field = inp.closest ? inp.closest('.field') : null;
+        if (field && field._field && field._field.type === 'pin') kind = 'number';
+        var lbl = field && field.querySelector('label');
+        title = lbl ? lbl.textContent : '';
+      }
+      nativeAsync('promptText', title, inp.value || '', kind).then(function (text) {
+        inp.value = text;
+        if (inp.id === 'resultsSearch') doSearchFrom(inp);
+        else if (inp.id === 'pinInput') submitPin();
+      }, function () { /* cancelled */ });
+      return;
+    }
     inp.focus();
     try { var l = inp.value.length; inp.setSelectionRange(l, l); } catch (e) {}
     Native.showKeyboard();

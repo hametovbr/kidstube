@@ -12,7 +12,7 @@
       'home.tip': '<b>Hi! Pick “Search” on the left and say what you want to watch 🎤</b><br>Like a channel? Open it and press “Subscribe” — its new videos will show up here.',
       // Search
       'search.placeholder': 'Press the microphone and say what you want to watch',
-      'search.voice': 'Voice search',
+      'search.voice': 'Voice search', 'search.prompt': 'What do you want to watch?',
       'search.ideas': 'Ideas to watch', 'search.recentIdeas': 'Recent searches and ideas',
       'search.none': 'Nothing found. Try saying it another way',
       'sugg': [['🚗', 'cars'], ['🐶', 'animals'], ['🎵', 'kids songs'], ['🦖', 'dinosaurs'], ['🧚', 'fairy tales'], ['🔢', 'learn numbers'], ['🎨', 'drawing'], ['🚀', 'space']],
@@ -82,7 +82,7 @@
       'row.empty': 'Здесь пока ничего нет', 'row.all': 'Все →', 'row.allSub': 'что я смотрел', 'row.allVideos': 'Все видео →',
       'home.tip': '<b>Привет! Выбери слева «Поиск» и скажи в микрофон, что хочешь посмотреть 🎤</b><br>Понравился канал? Открой его и нажми «Подписаться» — новые видео будут появляться здесь.',
       'search.placeholder': 'Нажми на микрофон и скажи, что хочешь посмотреть',
-      'search.voice': 'Голосовой поиск',
+      'search.voice': 'Голосовой поиск', 'search.prompt': 'Что хочешь посмотреть?',
       'search.ideas': 'Идеи, что посмотреть', 'search.recentIdeas': 'Недавно искали и идеи',
       'search.none': 'Ничего не нашлось. Попробуй сказать по‑другому',
       'sugg': [['🚗', 'машинки'], ['🐶', 'животные'], ['🎵', 'песенки'], ['🦖', 'динозавры'], ['🧚', 'сказки'], ['🔢', 'учим цифры'], ['🎨', 'рисуем'], ['🚀', 'космос']],

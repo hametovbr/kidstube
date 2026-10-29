@@ -1,6 +1,13 @@
 package app.kidstube.tv;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.text.InputType;
+import android.view.inputmethod.EditorInfo;
+import android.widget.EditText;
+import android.widget.FrameLayout;
+import android.widget.TextView;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
@@ -231,6 +238,95 @@ public class MainActivity extends Activity {
         return tvStatus;
     }
 
+    private AlertDialog textDialog;
+
+    private void showTextDialog(final String callId, String title, String value, final String kind) {
+        if (textDialog != null && textDialog.isShowing()) textDialog.dismiss();
+        final boolean[] answered = {false};
+        final EditText input = new EditText(this);
+        input.setSingleLine(true);
+        input.setText(value == null ? "" : value);
+        input.setSelection(input.getText().length());
+        input.setTextSize(22);
+        if ("pin".equals(kind)) {
+            input.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
+        } else if ("number".equals(kind)) {
+            input.setInputType(InputType.TYPE_CLASS_NUMBER);
+        } else {
+            input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        }
+        input.setImeOptions(("search".equals(kind) ? EditorInfo.IME_ACTION_SEARCH : EditorInfo.IME_ACTION_DONE)
+                | EditorInfo.IME_FLAG_NO_EXTRACT_UI);
+
+        FrameLayout box = new FrameLayout(this);
+        int pad = (int) (24 * getResources().getDisplayMetrics().density);
+        box.setPadding(pad, pad / 2, pad, 0);
+        box.addView(input);
+
+        final AlertDialog dialog = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                .setTitle(title)
+                .setView(box)
+                .setPositiveButton(android.R.string.ok, null)
+                .setNegativeButton(android.R.string.cancel, null)
+                .create();
+        final Runnable submit = new Runnable() {
+            @Override
+            public void run() {
+                if (answered[0]) return;
+                answered[0] = true;
+                js("window.kt && kt.onNative(" + JSONObject.quote(callId) + ",true," + JSONObject.quote(input.getText().toString()) + ")");
+                dialog.dismiss();
+            }
+        };
+        input.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                boolean enter = event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER
+                        && event.getAction() == KeyEvent.ACTION_DOWN;
+                if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE
+                        || actionId == EditorInfo.IME_ACTION_GO || enter) {
+                    submit.run();
+                    return true;
+                }
+                return false;
+            }
+        });
+        dialog.setOnShowListener(new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(DialogInterface d) {
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new android.view.View.OnClickListener() {
+                    @Override
+                    public void onClick(android.view.View v) {
+                        submit.run();
+                    }
+                });
+                input.requestFocus();
+                input.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                        if (imm != null) imm.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT);
+                    }
+                }, 200);
+            }
+        });
+        dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface d) {
+                if (!answered[0]) {
+                    answered[0] = true;
+                    js("window.kt && kt.onNative(" + JSONObject.quote(callId) + ",false,'cancel')");
+                }
+                if (textDialog == dialog) textDialog = null;
+            }
+        });
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+        }
+        textDialog = dialog;
+        dialog.show();
+    }
+
     void onSettingsChangedRemotely() {
         js("window.kt && kt.onSettingsChanged()");
     }
@@ -392,6 +488,21 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public String remoteUrl() {
             return server == null ? "" : server.url();
+        }
+
+        /**
+         * Text entry through a native dialog: the WebView doesn't reliably bring up the on-screen
+         * keyboard on Android TV, a regular EditText always does. The answer comes back through
+         * kt.onNative(callId, true, text) or kt.onNative(callId, false, "cancel").
+         */
+        @JavascriptInterface
+        public void promptText(final String callId, final String title, final String value, final String kind) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    showTextDialog(callId, title, value, kind);
+                }
+            });
         }
 
         @JavascriptInterface

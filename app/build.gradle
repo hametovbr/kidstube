@@ -14,7 +14,7 @@ android {
         targetSdk 34
         // CI builds always get a higher version so they install over older ones.
         versionCode 100 + buildNumber
-        versionName "1.7.${buildNumber}"
+        versionName "1.8.${buildNumber}"
     }
 
     // Release builds are signed with the private key kept in GitHub Actions secrets
