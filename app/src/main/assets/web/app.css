@@ -78,9 +78,9 @@ body.rail-open .rail-item { width: 11.5rem; }
 .rail-item.parent.focused { opacity: 1; }
 .rail-item.has-update::after { content: ""; position: absolute; left: 2.1rem; top: .45rem; width: .65rem; height: .65rem; border-radius: 50%; background: var(--yellow); }
 
-.logo-mark { width: 2.1rem; height: 1.5rem; border-radius: .5rem; background: var(--brand); position: relative; flex: none; }
-.logo-mark::after { content: ""; position: absolute; left: .8rem; top: .42rem; border-left: .6rem solid #fff; border-top: .34rem solid transparent; border-bottom: .34rem solid transparent; }
-.logo-mark.big { transform: scale(1.4); margin-right: .6rem; }
+/* All icons come from one Material Symbols sprite; sizes are set per context. */
+.logo-icon { width: 2.2rem; height: 2.2rem; color: var(--brand); flex: none; }
+.setup-logo .logo-icon { width: 3rem; height: 3rem; }
 
 /* ---------- Rows (home, related) ---------- */
 .row { margin: 0 0 1.25rem; }
@@ -102,6 +102,8 @@ body.rail-open .rail-item { width: 11.5rem; }
 .card.focused .ch { color: #cfd6e8; }
 
 .card.more { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .3rem; font-size: 1.25rem; font-weight: 700; min-height: 9rem; background: var(--surface); text-align: center; }
+.more-label { display: inline-flex; align-items: center; gap: .15rem; }
+.more-label svg { width: 1.6rem; height: 1.6rem; }
 .card.more .more-sub { font-size: .875rem; color: var(--muted); font-weight: 500; }
 
 /* Channel tiles */
@@ -118,7 +120,7 @@ body.rail-open .rail-item { width: 11.5rem; }
 .status { color: var(--muted); font-size: 1.25rem; text-align: center; padding: 2rem 0; }
 .status:empty { display: none; }
 .empty { display: flex; flex-direction: column; align-items: center; gap: .8rem; color: var(--muted); font-size: 1.25rem; padding: 2.5rem 0; text-align: center; line-height: 1.4; }
-.empty .big { font-size: 3.5rem; line-height: 1; }
+.empty .big svg { width: 4rem; height: 4rem; color: var(--muted); opacity: .8; }
 
 /* Skeleton placeholders while loading */
 .skel { border-radius: var(--radius); background: var(--surface); overflow: hidden; }
@@ -145,7 +147,9 @@ body.rail-open .rail-item { width: 11.5rem; }
 .chips { display: flex; flex-wrap: wrap; gap: .9rem; }
 .chip { display: flex; align-items: center; gap: .6rem; height: 3rem; padding: 0 1.3rem 0 .5rem; border-radius: 1.5rem; background: var(--surface); font-size: 1.125rem; font-weight: 600; }
 .chip img { width: 2.1rem; height: 2.1rem; border-radius: 50%; object-fit: cover; }
-.chip .ico { width: 2.1rem; text-align: center; font-size: 1.3rem; }
+.chip .ico { width: 2.1rem; height: 2.1rem; border-radius: 50%; background: var(--surface2); display: flex; align-items: center; justify-content: center; }
+.chip .ico svg { width: 1.3rem; height: 1.3rem; color: var(--yellow); }
+.chip.focused .ico { background: var(--surface); }
 .chip.focused { transform: scale(1.06); background: var(--surface2); }
 
 /* ---------- Channel page ---------- */
@@ -182,7 +186,9 @@ body.rail-open .rail-item { width: 11.5rem; }
 .osd-times { display: flex; justify-content: space-between; margin-top: .6rem; font-size: 1rem; color: #dfe4ef; }
 .osd-hints { display: flex; gap: .8rem; justify-content: center; margin-top: .6rem; }
 .osd-hints span { background: rgba(255,255,255,.12); border-radius: 1rem; padding: .25rem .8rem; font-size: .875rem; color: #d7deec; }
-.osd-hints b { color: #fff; margin-right: .3rem; }
+.osd-hints span { display: inline-flex; align-items: center; }
+.osd-hints b { color: #fff; margin-right: .35rem; display: inline-flex; align-items: center; }
+.osd-hints b svg { width: 1.1rem; height: 1.1rem; }
 .osd-hints i { font-style: normal; }
 .player-msg { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: rgba(20,26,40,.94); padding: 1.4rem 2rem; border-radius: 1rem; font-size: 1.375rem; display: none; text-align: center; }
 .player-msg.shown { display: block; }
@@ -217,7 +223,8 @@ body.rail-open .rail-item { width: 11.5rem; }
 .toggle .sw::after { content: ""; position: absolute; top: .2rem; left: .2rem; width: 1.2rem; height: 1.2rem; border-radius: 50%; background: #fff; transition: left .15s; }
 .toggle.on .sw { background: var(--ok); }
 .toggle.on .sw::after { left: 1.6rem; }
-.choice-val { font-weight: 700; color: var(--yellow); margin-left: 1rem; white-space: nowrap; }
+.choice-val { font-weight: 700; color: var(--yellow); margin-left: 1rem; white-space: nowrap; display: inline-flex; align-items: center; gap: .2rem; }
+.choice-val svg { width: 1.4rem; height: 1.4rem; }
 .field.focused, .toggle.focused { background: var(--surface2); }
 .section-title { font-size: 1.25rem; font-weight: 700; margin: 1rem 0 0; }
 .update-box { display: flex; align-items: center; justify-content: space-between; gap: 1rem; background: var(--surface); border-radius: .9rem; padding: .9rem 1.1rem; margin-top: 1.4rem; }
@@ -231,9 +238,11 @@ body.rail-open .rail-item { width: 11.5rem; }
 .pin-err { color: var(--brand); min-height: 1.4rem; margin-top: .6rem; }
 .menu-list { display: flex; flex-direction: column; gap: .7rem; }
 .menu-list .btn { justify-content: flex-start; border-radius: .9rem; }
+.btn svg { width: 1.4rem; height: 1.4rem; }
 
 /* ---------- Toast & spinner ---------- */
-.toast { position: fixed; left: 50%; bottom: 2.2rem; transform: translate(-50%, 1rem); background: #2b3654; padding: .9rem 1.6rem; border-radius: 1rem; font-size: 1.125rem; opacity: 0; transition: all .25s; z-index: 50; pointer-events: none; max-width: 80vw; text-align: center; }
+.toast { position: fixed; left: 50%; bottom: 2.2rem; transform: translate(-50%, 1rem); background: #2b3654; padding: .9rem 1.6rem; border-radius: 1rem; font-size: 1.125rem; opacity: 0; transition: all .25s; z-index: 50; pointer-events: none; max-width: 80vw; text-align: center; display: flex; align-items: center; gap: .6rem; }
+.toast svg { width: 1.4rem; height: 1.4rem; color: var(--ok); }
 .toast.shown { opacity: 1; transform: translate(-50%, 0); }
 .spinner { width: 2.4rem; height: 2.4rem; border: .3rem solid rgba(255,255,255,.2); border-top-color: var(--brand); border-radius: 50%; animation: spin .8s linear infinite; margin: 1rem auto; }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -262,7 +271,9 @@ body.theme-teen {
 body.theme-teen .rail { background: linear-gradient(90deg, rgba(17,18,20,1) 70%, rgba(17,18,20,0)); }
 body.theme-teen.rail-open .rail { background: #17181b; }
 body.theme-teen .rail-item.focused { background: #e8e9ec; color: #111214; box-shadow: none; }
-body.theme-teen .rail-item.active { background: transparent; color: var(--text); }
+body.theme-teen .rail-item { color: #7d8089; }
+body.theme-teen .rail-item.active { background: transparent; color: #fff; }
+body.theme-teen .rail-item.active::before { content: ""; position: absolute; left: .1rem; top: .9rem; bottom: .9rem; width: .2rem; border-radius: .1rem; background: var(--brand); }
 body.theme-teen .rail-item.active.focused { background: #e8e9ec; color: #111214; }
 body.theme-teen .row { margin-bottom: .75rem; }
 body.theme-teen .row-title { font-size: 1.125rem; font-weight: 600; height: 1.9rem; }
@@ -294,7 +305,7 @@ body.theme-teen .chips-title { font-size: 1rem; font-weight: 600; }
 body.theme-teen .chip { height: 2.5rem; padding: 0 1.1rem; font-size: 1rem; font-weight: 500; border-radius: 1.25rem; }
 body.theme-teen .chip .ico { display: none; }
 body.theme-teen .chip.focused { background: #e8e9ec; color: #111214; box-shadow: none; transform: none; }
-body.theme-teen .empty .big { display: none; }
+body.theme-teen .empty .big svg { width: 3rem; height: 3rem; }
 body.theme-teen .btn { height: 2.75rem; font-size: 1rem; font-weight: 600; border-radius: 1.375rem; }
 body.theme-teen .btn.focused { transform: none; background: #e8e9ec; color: #111214; box-shadow: none; }
 body.theme-teen .tip { font-size: 1rem; }
@@ -308,3 +319,6 @@ body.theme-teen .skel .line { background: #1f2024; margin: .5rem .1rem; }
 body.theme-teen .chan-avatar { width: 3.5rem; height: 3.5rem; }
 body.theme-teen .chan-title { font-size: 1.625rem; font-weight: 700; }
 body.theme-teen .sub-btn.on { background: var(--surface2); color: var(--text); }
+body.theme-teen .logo-icon { color: var(--text); }
+body.theme-teen .toast { background: #2a2c31; }
+body.theme-teen .toast svg { color: var(--text); }

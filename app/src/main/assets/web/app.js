@@ -767,16 +767,28 @@
     return frag;
   }
 
-  function emptyState(emoji, text) {
+  function emptyState(iconName, text) {
     var e = h('div', 'empty');
-    e.appendChild(h('span', 'big', emoji));
+    var ic = h('span', 'big');
+    ic.innerHTML = icon(iconName);
+    e.appendChild(ic);
     e.appendChild(h('span', '', text));
     return e;
   }
 
+  /** "More / All videos" tile at the end of a row or grid: label + chevron, optional subtitle. */
+  function moreCard(label, sub) {
+    var c = h('div', 'card more f');
+    var l = h('span', 'more-label');
+    l.appendChild(document.createTextNode(label));
+    l.insertAdjacentHTML('beforeend', icon('chev-r'));
+    c.appendChild(l);
+    if (sub) c.appendChild(h('span', 'more-sub', sub));
+    return c;
+  }
+
   function makeChannelCard(ch) {
-    var c = h('div', 'card more f', t('row.allVideos'));
-    c.appendChild(h('span', 'more-sub', ch.title));
+    var c = moreCard(t('row.allVideos'), ch.title);
     c._channel = ch;
     return c;
   }
@@ -800,10 +812,10 @@
     box.innerHTML = '';
     homeRows = [];
     var subs = S.homeChannels.length ? loadSubscriptions() : null;
-    homeRows.push({ kind: 'recs', icon: 'sparkle', title: t('row.forYou'), load: recommendations });
+    homeRows.push({ kind: 'recs', icon: 'foryou', title: t('row.forYou'), load: recommendations });
     if (subs) homeRows.push({ kind: 'subs', icon: 'new', title: t('row.subs'), load: function () { return subs.then(function (x) { return x.videos; }); } });
     homeRows.push({ kind: 'history', icon: 'history', title: t('row.again') });
-    if (subs) homeRows.push({ kind: 'channels', icon: 'tv', title: t('row.channels'), load: function () { return subs.then(function (x) { return x.channels; }); } });
+    if (subs) homeRows.push({ kind: 'channels', icon: 'subs', title: t('row.channels'), load: function () { return subs.then(function (x) { return x.channels; }); } });
     S.homeQueries.forEach(function (q) {
       homeRows.push({ kind: 'query', icon: 'search', title: q, load: function () { return searchVideos(q).then(function (res) { return res.items; }); } });
     });
@@ -878,7 +890,7 @@
       if (keep && r.cardsEl.contains(cur)) keepRow = r;
       r.cardsEl.innerHTML = '';
       r.el.style.display = '';
-      r.titleEl.innerHTML = icon(r.icon || 'sparkle');
+      r.titleEl.innerHTML = icon(r.icon || 'foryou');
       r.titleEl.appendChild(document.createTextNode(r.title));
       if (r.loading) { r.cardsEl.appendChild(skeletons(4)); }
       else if (r.error) { r.cardsEl.appendChild(h('div', 'row-msg', r.error)); }
@@ -890,8 +902,7 @@
       } else {
         items.slice(0, 30).forEach(function (v, i) { r.cardsEl.appendChild(makeCard(v, items, i)); });
         if (r.kind === 'history' && items.length > 4) {
-          var all = h('div', 'card more f', t('row.all'));
-          all.appendChild(h('span', 'more-sub', t('row.allSub')));
+          var all = moreCard(t('row.all'), t('row.allSub'));
           all._section = 'library';
           r.cardsEl.appendChild(all);
         }
@@ -940,13 +951,15 @@
     box.innerHTML = '';
     var recent = recentQueries().filter(function (q) { return !queryBlocked(q); });
     $('chipsTitle').textContent = recent.length ? t('search.recentIdeas') : t('search.ideas');
-    recent.forEach(function (q) { box.appendChild(makeChip('🕘', q)); });
+    recent.forEach(function (q) { box.appendChild(makeChip('history', q)); });
     t('sugg').forEach(function (sg) { if (recent.indexOf(sg[1]) < 0) box.appendChild(makeChip(sg[0], sg[1])); });
   }
 
-  function makeChip(emoji, q) {
+  function makeChip(iconName, q) {
     var c = h('button', 'chip f');
-    c.appendChild(h('span', 'ico', emoji));
+    var ic = h('span', 'ico');
+    ic.innerHTML = icon(iconName);
+    c.appendChild(ic);
     c.appendChild(h('span', '', q));
     c._query = q;
     return c;
@@ -1017,7 +1030,7 @@
       if (Screens.top() === Results && (!Nav.current || !document.body.contains(Nav.current))) Nav.first();
       return;
     }
-    renderGrid(Results, $('resultsGrid'), $('resultsStatus'), R, resetFocus, ['🙈', t('search.none')]);
+    renderGrid(Results, $('resultsGrid'), $('resultsStatus'), R, resetFocus, ['search-off', t('search.none')]);
   }
 
   /** Shared grid renderer for search results and channel pages. state: {items, next, loading, error}. */
@@ -1031,13 +1044,13 @@
     var items = allowed(st.items);
     items.forEach(function (v, i) { grid.appendChild(makeCard(v, items, i)); });
     if (st.next && !st.loading && !st.error) {
-      var more = h('div', 'card more f', t('more'));
+      var more = moreCard(t('more'));
       more._more = true;
       grid.appendChild(more);
     }
     if (st.loading && !items.length) grid.appendChild(skeletons(8));
     else if (st.loading) status.appendChild(h('div', 'spinner'));
-    else if (st.error) status.appendChild(emptyState('📡', st.error));
+    else if (st.error) status.appendChild(emptyState('offline', st.error));
     else if (!items.length) status.appendChild(emptyState(emptyText[0], emptyText[1]));
 
     if (Screens.top() !== screen) return;
@@ -1058,7 +1071,7 @@
   });
 
   function renderLibrary(resetFocus) {
-    renderGrid(Library, $('libGrid'), $('libStatus'), { items: getHistory() }, resetFocus, ['📺', t('watched.empty')]);
+    renderGrid(Library, $('libGrid'), $('libStatus'), { items: getHistory() }, resetFocus, ['history', t('watched.empty')]);
   }
 
   // ---------------- My channels ----------------
@@ -1078,7 +1091,7 @@
     grid.innerHTML = '';
     status.innerHTML = '';
     if (chs === null) { grid.appendChild(skeletons(5)); return; }
-    if (!chs.length) status.appendChild(emptyState('⭐', t('channels.empty')));
+    if (!chs.length) status.appendChild(emptyState('subs', t('channels.empty')));
     chs.forEach(function (ch) { grid.appendChild(makeChannelTile(ch)); });
     if (Screens.top() === MyChannels && resetFocus && !MyChannels.userMoved) {
       var first = grid.querySelector('.f');
@@ -1118,8 +1131,8 @@
 
   function toggleSubscribe(id) {
     var i = subscribedIndex(id);
-    if (i >= 0) { S.homeChannels.splice(i, 1); toast(t('channel.unsubscribedToast')); }
-    else { S.homeChannels.push('https://www.youtube.com/channel/' + id); toast(t('channel.subscribedToast')); }
+    if (i >= 0) { S.homeChannels.splice(i, 1); toast(t('channel.unsubscribedToast'), 'check'); }
+    else { S.homeChannels.push('https://www.youtube.com/channel/' + id); toast(t('channel.subscribedToast'), 'star'); }
     saveSettings();
     homeDirty = true;
   }
@@ -1176,7 +1189,7 @@
   }
 
   function renderChannel(resetFocus) {
-    renderGrid(Channel, $('chanGrid'), $('chanStatus'), C, resetFocus, ['📭', t('channel.empty')]);
+    renderGrid(Channel, $('chanGrid'), $('chanStatus'), C, resetFocus, ['library', t('channel.empty')]);
   }
 
   // ---------------- Player ----------------
@@ -1452,22 +1465,24 @@
       var list = $('menuList');
       list.innerHTML = '';
       var opts = [
-        [t('menu.blockVideo'), function () {
+        ['block', t('menu.blockVideo'), function () {
           if (S.blockedVideos.indexOf(v.id) < 0) S.blockedVideos.push(v.id);
-          saveSettings(); toast(t('toast.videoBlocked')); afterBlock();
+          saveSettings(); toast(t('toast.videoBlocked'), 'block'); afterBlock();
         }],
-        [t('menu.blockChannel', v.channelTitle), function () {
+        ['block', t('menu.blockChannel', v.channelTitle), function () {
           S.blockedChannels.push(v.channelId ? 'https://www.youtube.com/channel/' + v.channelId : v.channelTitle);
-          saveSettings(); toast(t('toast.channelBlocked')); afterBlock();
+          saveSettings(); toast(t('toast.channelBlocked'), 'block'); afterBlock();
         }],
-        [subscribedIndex(v.channelId) >= 0 ? t('menu.unsubscribe') : t('menu.subscribe'), function () {
+        [subscribedIndex(v.channelId) >= 0 ? 'check' : 'star', subscribedIndex(v.channelId) >= 0 ? t('menu.unsubscribe') : t('menu.subscribe'), function () {
           toggleSubscribe(v.channelId); Screens.pop();
         }],
-        [t('cancel'), function () { Screens.pop(); }]
+        ['back', t('cancel'), function () { Screens.pop(); }]
       ];
       opts.forEach(function (o) {
-        var b = h('button', 'btn f', o[0]);
-        b._run = o[1];
+        var b = h('button', 'btn f');
+        b.innerHTML = icon(o[0]);
+        b.appendChild(h('span', '', o[1]));
+        b._run = o[2];
         list.appendChild(b);
       });
       Screens.push('menu');
@@ -1569,7 +1584,8 @@
         ch._show = function () {
           var self = this;
           var o = f.options.filter(function (x) { return x[0] === self._value; })[0] || f.options[0];
-          this._val.textContent = '◀ ' + t(o[1]) + ' ▶';
+          this._val.innerHTML = icon('chev-l') + '<span></span>' + icon('chev-r');
+          this._val.querySelector('span').textContent = t(o[1]);
         };
         ch._show();
         form.appendChild(ch);
@@ -1607,7 +1623,7 @@
     saveSettings();
     applyLanguage();
     Native.hideKeyboard();
-    toast(t('toast.saved'));
+    toast(t('toast.saved'), 'check');
     goHome();
   }
 
@@ -1718,8 +1734,8 @@
     if (action === 'subscribe') { if (C.id) { toggleSubscribe(C.id); updateSubButton(); } return; }
     if (action === 'rel-close') return closeRelated();
     if (action === 'rel-channel') return openChannel(P.rel && P.rel.ch ? P.rel.ch : { id: P.video.channelId, title: P.video.channelTitle });
-    if (action === 'clear-cache') { pruneCache(true); toast(t('toast.cacheCleared')); return; }
-    if (action === 'clear-history') { Native.clearHistory(); toast(t('toast.historyCleared')); return; }
+    if (action === 'clear-cache') { pruneCache(true); toast(t('toast.cacheCleared'), 'check'); return; }
+    if (action === 'clear-history') { Native.clearHistory(); toast(t('toast.historyCleared'), 'check'); return; }
     if (inp) openKeyboard(inp);
   }
 
@@ -1780,8 +1796,8 @@
       }, function (e) { toast(t('upd.checkFail', e.message)); });
     },
     onRemoteAction: function (what) {
-      if (what === 'cache') { pruneCache(true); toast(t('toast.cacheCleared')); }
-      if (what === 'history') { toast(t('toast.historyCleared')); refreshVisible(); if (Screens.top() === Library) renderLibrary(false); }
+      if (what === 'cache') { pruneCache(true); toast(t('toast.cacheCleared'), 'check'); }
+      if (what === 'history') { toast(t('toast.historyCleared'), 'check'); refreshVisible(); if (Screens.top() === Library) renderLibrary(false); }
     },
     onUpdateProgress: function (p) { if (Upd.busy) updInfo(t('upd.progress', p)); },
     onUpdateError: function (msg) { Upd.busy = false; updInfo(msg); toast(msg); },
@@ -1790,10 +1806,10 @@
     onSettingsChanged: function () {
       loadSettings();
       var top = Screens.top();
-      if (top === Setup || top === Settings) { toast(t('toast.remoteSaved')); goHome(); return; }
+      if (top === Setup || top === Settings) { toast(t('toast.remoteSaved'), 'check'); goHome(); return; }
       if (Screens.stack.indexOf(Home) >= 0) buildHome();
       refreshVisible();
-      toast(t('toast.updated'));
+      toast(t('toast.updated'), 'check');
     }
   };
 
@@ -1810,9 +1826,10 @@
   // ===================================================================================
   // Toast & start
   // ===================================================================================
-  function toast(t) {
+  function toast(text, iconName) {
     var el = $('toast');
-    el.textContent = t;
+    el.innerHTML = iconName ? icon(iconName) : '';
+    el.appendChild(h('span', '', text));
     el.classList.add('shown');
     clearTimeout(el._t);
     el._t = setTimeout(function () { el.classList.remove('shown'); }, 3000);

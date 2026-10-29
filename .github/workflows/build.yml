@@ -57,7 +57,7 @@ jobs:
           gh release delete latest --yes --cleanup-tag || true
           # The app's updater reads "versionCode: N" from the notes and downloads the .apk asset.
           gh release create latest KidsTube.apk \
-            --title "KidsTube 1.8.${{ github.run_number }}" \
+            --title "KidsTube 1.9.${{ github.run_number }}" \
             --notes "$(printf 'versionCode: %s\n\n%s\n\nBuilt from commit %s' "$CODE" "$MSG" "${{ github.sha }}")" \
             --target ${{ github.sha }} \
             --latest

@@ -174,6 +174,7 @@ The TV interface follows the Android TV and Fire TV design guidelines:
 - a dark, low-glare palette with bright colour reserved for focus;
 - icons and pictures alongside text, voice and one-press chips instead of typing — the main users can't read well yet;
 - skeleton placeholders while loading and friendly empty states.
+- **Icons** are all [Material Symbols](https://fonts.google.com/icons) (Rounded, Apache License 2.0) from a single sprite; no emoji or text arrows are used as icons, so they render the same on every TV box.
 
 ## Building
 
